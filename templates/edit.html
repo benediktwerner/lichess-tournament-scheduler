@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}{% if type == "create" %}Create{% else %}Edit{% endif %} schedule{% endblock %}
+{% block body %}
+<form action="/{{type}}/{{schedule.id if type == 'edit' else schedule.team}}" method="POST">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+  <table class="form-table">
+    <tr>
+      <td>Team:</td>
+      <td><a href="https://lichess.org/team/{{team}}" target="_blank">{{schedule.team}}</a></td>
+    </tr>
+    <tr>
+      <td>Name:</td>
+      <td><input type="text" name="name" value="{{schedule.name}}" required></td>
+    </tr>
+    <tr>
+      <td>Description:<br>(optional)</td>
+      <td><textarea name="description" cols="30" rows="5">{{schedule.description}}</textarea></td>
+    </tr>
+    <tr>
+      <td>Initial clock:</td>
+      <td>
+        <select name="clock" required>
+          {% for x in [0, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 5, 6, 7, 10, 15, 20, 25, 30, 40, 50, 60] %}
+            <option value="{{x}}" {% if x == schedule.clock %}selected{% endif %}>{{x}}</option>
+          {% endfor %}
+        </select>
+        minute(s)
+      </td>
+    </tr>
+    <tr>
+      <td>Increment:</td>
+      <td>
+        <input
+          type="number"
+          name="increment"
+          value="{{schedule.increment|default(0)}}"
+          min="0"
+          max="60"
+          step="1"
+          required
+        />
+        second(s)
+      </td>
+    </tr>
+    <tr>
+      <td>Duration:</td>
+      <td>
+        <input
+          type="number"
+          name="minutes"
+          min="0"
+          max="360"
+          step="1"
+          value="{{schedule.minutes|default(60)}}"
+          required
+        />
+        minute(s)
+      </td>
+    </tr>
+    <tr>
+      <td>Variant:</td>
+      <td>
+        <select name="variant">
+          {% for key, name in variants %}
+            <option value="{{key}}" {% if schedule.variant == key %}selected{% endif %}>{{name}}</option>
+          {% endfor %}
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <td>Rated:</td>
+      <td><input type="checkbox" name="rated" {% if schedule.get('rated', True) %}checked{% endif %} /></td>
+    </tr>
+    <tr>
+      <td>FEN (optional):</td>
+      <td><input type="text" name="position" size="60" value="{{schedule.position}}"></td>
+    </tr>
+    <tr>
+      <td>Berserkable:</td>
+      <td><input type="checkbox" name="berserkable" {% if schedule.get('berserkable', True) %}checked{% endif %} /></td>
+    </tr>
+    <tr>
+      <td>Streakable:</td>
+      <td><input type="checkbox" name="streakable" {% if schedule.get('streakable', True) %}checked{% endif %} /></td>
+    </tr>
+    <tr>
+      <td>Min rating:</td>
+      <td>
+        <input type="checkbox" name="minRating-enabled" data-enables="minRating" {% if schedule.minRating %}checked{% endif %} />
+        <input type="number" name="minRating" id="minRating" min="600" max="3000" step="1" {% if not schedule.minRating %}disabled{% endif %} value="{{schedule.minRating}}">
+      </td>
+    </tr>
+    <tr>
+      <td>Max rating:</td>
+      <td>
+        <input type="checkbox" name="maxRating-enabled" data-enables="maxRating" {% if schedule.maxRating %}checked{% endif %} />
+        <input type="number" name="maxRating" id="maxRating" min="600" max="3000" step="1" {% if not schedule.maxRating %}disabled{% endif %} value="{{schedule.maxRating}}">
+      </td>
+    </tr>
+    <tr>
+      <td>Min rated games:</td>
+      <td>
+        <input type="checkbox" name="minGames-enabled" data-enables="minGames" {% if schedule.minGames %}checked{% endif %} />
+        <input type="number" name="minGames" id="minGames" min="0" max="9999" step="1" {% if not schedule.minGames %}disabled{% endif %} value="{{schedule.minGames}}">
+      </td>
+    </tr>
+    <tr>
+      <td>Schedule:</td>
+      <td>
+        <select name="scheduleDay" required>
+          {% for s in schedules %}
+            <option value="{{loop.index0}}" {% if schedule.scheduleDay == loop.index0 %}selected{% endif %}>{{s}}</option>
+          {% endfor %}
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <td>Time (UTC):</td>
+      <td><input type="time" name="scheduleTime" {% if schedule.scheduleTime %}value="{{'{:02}:{:02}'.format(schedule.scheduleTime // 60, schedule.scheduleTime % 60)}}"{% endif %} required></td>
+    </tr>
+  </table>
+  <br>
+  <button type="submit">{% if type == "create" %}Create{% else %}Update{% endif %}</button>
+  <a href="/" class="button">Cancel</a>
+</form>
+
+<script>
+  document.querySelectorAll('[data-enables]').forEach(el => {
+    el.addEventListener("input", () => {
+      document.getElementById(el.dataset.enables).disabled = !el.checked;
+    });
+  });
+</script>
+{% endblock %}

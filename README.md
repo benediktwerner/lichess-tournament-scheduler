@@ -1,0 +1,6 @@
+- Setup venv: `python3 -m venv venv`
+- Activate: `source venv/bin/activate`
+- Install requirements: `pip install -r requirements.txt`
+- Generate a secret key: `python3 -c 'import secrets; print(secrets.token_hex())'`
+- Create a `config.py` with `SECRET_KEY = "<the key>"`
+- Dev server: `FLASK_ENV=development flask run`
