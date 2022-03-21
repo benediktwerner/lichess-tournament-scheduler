@@ -18,4 +18,10 @@ CREATE TABLE IF NOT EXISTS schedules (
     minRating INT,
     maxRating INT,
     minGames INT
-)
+);
+
+CREATE TABLE IF NOT EXISTS createdArenas (
+    id TEXT NOT NULL,
+    team TEXT NOT NULL,
+    time INT NOT NULL
+);

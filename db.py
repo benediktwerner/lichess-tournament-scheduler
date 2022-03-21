@@ -1,23 +1,23 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, List, Optional, cast
 import sqlite3
-from time import time
 from calendar import timegm
+from dataclasses import dataclass
 from datetime import datetime, timedelta
+from time import time
+from typing import Any, List, Optional
 
-from flask import current_app
+from flask import Flask
 
 DATABASE = "database.sqlite"
 
 
 class Db:
     @staticmethod
-    def create_tables() -> None:
+    def create_tables(app: Flask) -> None:
         with Db() as db:
             with db.db as conn:
-                with current_app.open_resource("schema.sql", mode="r") as f:
+                with app.open_resource("schema.sql", mode="r") as f:
                     conn.executescript(f.read())
 
     def __enter__(self) -> Db:
@@ -35,6 +35,32 @@ class Db:
         result = self._query(query, args)
         return result[0] if result else None
 
+    def insert_created(self, id: str, team: str, t: int) -> None:
+        with self.db as conn:
+            conn.execute(
+                """INSERT INTO createdArenas (
+                    id,
+                    team,
+                    time
+                   ) VALUES (?, ?, ?)
+                """,
+                (id, team, t),
+            )
+
+    def delete_created(self, id: str) -> None:
+        with self.db as conn:
+            conn.execute("DELETE FROM createdArenas WHERE id = ?", (id,))
+
+    def delete_past_created(self) -> None:
+        with self.db as conn:
+            conn.execute("DELETE FROM createdArenas WHERE time < ?", (int(time()),))
+
+    def team_of_created(self, id: str) -> Optional[str]:
+        a = self._query_one("SELECT team FROM createdArenas WHERE id = ?", (id,))
+        if a:
+            return str(a["team"])
+        return None
+
     def schedules(self) -> List[ScheduleWithId]:
         return [
             ScheduleWithId._from_row(x) for x in self._query(f"SELECT * FROM schedules")
@@ -43,7 +69,7 @@ class Db:
     def team_of_schedule(self, id: int) -> Optional[str]:
         row = self._query_one("SELECT team from schedules WHERE id = ?", (id,))
         if row:
-            return cast(str, row["team"])
+            return str(row["team"])
         return None
 
     def insert_schedule(self, s: Schedule) -> None:
@@ -197,12 +223,6 @@ class Schedule:
 
     def next_time(self) -> Optional[int]:
         now = time()
-
-        if self.scheduleStart and now < self.scheduleStart:
-            return None
-        if self.scheduleEnd and self.scheduleEnd < now:
-            return None
-
         date = datetime.utcnow()
         new = date.replace(
             hour=self.scheduleHour,
@@ -218,7 +238,15 @@ class Schedule:
             new += timedelta(days=self.scheduleDay - date.isoweekday())
             if new < date:
                 new += timedelta(days=7)
-        return timegm(new.timetuple())
+
+        nxt = timegm(new.timetuple())
+
+        if self.scheduleStart and nxt < self.scheduleStart:
+            return None
+        if self.scheduleEnd and self.scheduleEnd < nxt:
+            return None
+
+        return nxt
 
 
 @dataclass
@@ -227,7 +255,11 @@ class ScheduleWithId(Schedule):
 
     @staticmethod
     def _from_row(row: sqlite3.Row) -> ScheduleWithId:
-        return ScheduleWithId(**row)  # type: ignore
+        s = ScheduleWithId(**row)  # type: ignore
+        s.rated = bool(s.rated)
+        s.berserkable = bool(s.berserkable)
+        s.streakable = bool(s.streakable)
+        return s
 
     @staticmethod
     def from_json(j: dict) -> ScheduleWithId:

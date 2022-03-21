@@ -1,10 +1,11 @@
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Dict, List, Optional
-from time import time
-import re
 
-from flask import abort, request, current_app
+import re
+from dataclasses import dataclass
+from time import time
+from typing import Dict, List, Optional
+
+from flask import Flask, abort, current_app, request
 from requests import HTTPError
 
 import api
@@ -29,10 +30,10 @@ class CacheEntry:
 
 
 class Auth:
-    def __init__(self) -> None:
+    def __init__(self, app: Flask) -> None:
         self.cache: Dict[str, CacheEntry] = {}
-        self.admins = set(current_app.config["ADMINS"])
-        self.teams = set(current_app.config["TEAMS_WHITELIST"])
+        self.admins = set(app.config["ADMINS"])
+        self.teams = set(app.config["TEAMS_WHITELIST"])
         self.rate_limited_until = 0
 
     def get_from_cache(self, token: str) -> Optional[User]:
@@ -80,10 +81,13 @@ class Auth:
             ):
                 abort(403)
 
-            teams = [
-                team for team in api.leader_teams(res.userId) if team in self.teams
-            ]
-            user = User(res.userId in self.admins, teams)
+            if res.userId in self.admins:
+                user = User(True, [])
+            else:
+                teams = [
+                    team for team in api.leader_teams(res.userId) if team in self.teams
+                ]
+                user = User(False, teams)
             self.add_cache(token, user)
             return user
         except HTTPError as e:

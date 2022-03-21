@@ -2,3 +2,5 @@ __pycache__
 venv
 config.py
 *.sqlite
+node_modules
+svelte/public/build

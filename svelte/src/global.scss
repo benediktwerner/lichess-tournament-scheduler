@@ -9,11 +9,16 @@ body {
     sans-serif, Apple Color Emoji, Segoe UI Emoji;
   color: #c9d1d9;
   background-color: #0d1117;
-  padding: 0 1rem;
+  padding: 0 1rem 1rem 1rem;
 }
 
 a {
   color: #58a6ff;
+  text-decoration: none;
+  
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 .overview-table td {
@@ -24,21 +29,8 @@ a {
   padding-right: 0.5em;
 }
 
-button,
-.button {
+button {
   cursor: pointer;
-  color: black;
-  background-color: rgb(239, 239, 239);
-  padding: 0.2em 0.5em;
-  border: 1px solid gray;
-  border-radius: 2px;
-  text-decoration: none;
-  display: inline-block;
-}
-
-button:hover,
-.button:hover {
-  background-color: rgb(199, 199, 199);
 }
 
 input[type='checkbox'] {
