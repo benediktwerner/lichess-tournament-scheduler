@@ -11,16 +11,26 @@ from requests import HTTPError
 import api
 
 CACHE_SIZE = 100
+CACHE_SECS = 10 * 60
+RATE_LIMIT_TIMEOUT_SECS = 10 * 60
 
 
 @dataclass
 class User:
-    admin: bool
+    is_admin: bool
     teams: List[str]
 
     def for_team(self, team: str) -> None:
-        if not self.admin and team not in self.teams:
+        if not self.is_admin and team not in self.teams:
             abort(403)
+
+    @staticmethod
+    def plain(teams: List[str]) -> User:
+        return User(False, teams)
+
+    @staticmethod
+    def admin() -> User:
+        return User(True, [])
 
 
 @dataclass
@@ -39,7 +49,7 @@ class Auth:
     def get_from_cache(self, token: str) -> Optional[User]:
         cached = self.cache.get(token)
         if cached:
-            if cached.time > time() - 600:
+            if cached.time > time() - CACHE_SECS:
                 return cached.user
             del self.cache[token]
         return None
@@ -49,7 +59,7 @@ class Auth:
             self.cache = {
                 k: v
                 for k, v in self.cache.items()
-                if v.time > time() - 600 and (v.user.admin or v.user.teams)
+                if v.time > time() - CACHE_SIZE and (v.user.is_admin or v.user.teams)
             }
         if len(self.cache) >= CACHE_SIZE:
             self.cache = {}
@@ -77,22 +87,22 @@ class Auth:
             if (
                 not res
                 or "tournament:write" not in res.scopes
-                or res.expires < time() * 1000
+                or res.expires < time()
             ):
                 abort(403)
 
             if res.userId in self.admins:
-                user = User(True, [])
+                user = User.admin()
             else:
                 teams = [
                     team for team in api.leader_teams(res.userId) if team in self.teams
                 ]
-                user = User(False, teams)
+                user = User.plain(teams)
             self.add_cache(token, user)
             return user
         except HTTPError as e:
             current_app.logger.error(f"Error during auth requests to Lichess: {e}")
             if e.response.status_code == 429:
-                self.rate_limited_until = int(time()) + 600
+                self.rate_limited_until = int(time()) + RATE_LIMIT_TIMEOUT_SECS
                 abort(503)
             abort(500)

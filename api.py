@@ -41,7 +41,7 @@ def verify_token(t: str) -> Optional[Token]:
     tt = res.json()[t]
     if not tt:
         return None
-    return Token(tt["userId"], tt["expires"], tt["scopes"].split(","))
+    return Token(tt["userId"], tt["expires"] // 1000, tt["scopes"].split(","))
 
 
 def leader_teams(userId: str) -> List[str]:

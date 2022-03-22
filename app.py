@@ -45,7 +45,7 @@ def schedules() -> Any:
         by_team = {team: [] for team in app.config["TEAMS_WHITELIST"]}
         for s in db.schedules():
             by_team[s.team].append(s)
-        teams = app.config["TEAMS_WHITELIST"] if user.admin else user.teams
+        teams = app.config["TEAMS_WHITELIST"] if user.is_admin else user.teams
         return jsonify([(team, by_team[team]) for team in teams])
 
 
