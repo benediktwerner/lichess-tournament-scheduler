@@ -84,6 +84,11 @@
     else alert(`Error: ${await resp.text()}`);
   };
 
+  const formatDatetime = (t?: number) => {
+    if (!t) return '';
+    return new Date(t * 1000).toISOString().slice(0, 16).replace('T', ' ');
+  };
+
   load(loadCreatedArenas);
 </script>
 
@@ -108,11 +113,11 @@
             <td>{new Date(arena.startsAt).toUTCString()}</td>
             <td>in {formatUntil(arena.secondsToStart)}</td>
             <td>{arena.nbPlayers} players</td>
-            <td
-              ><button on:click={() => handleCancel(team, arena.id)}
-                >Cancel</button
-              ></td
-            >
+            <td>
+              <button on:click={() => handleCancel(team, arena.id)}>
+                Cancel
+              </button>
+            </td>
           </tr>
         {/each}
       </table>
@@ -120,6 +125,15 @@
     {#if schedules.length > 0}
       <h4>Scheduled tournaments</h4>
       <table class="overview-table">
+        <tr>
+          <th>Name</th>
+          <th>Variant</th>
+          <th>TC</th>
+          <th>Duration</th>
+          <th>Schedule</th>
+          <th>From</th>
+          <th>To</th>
+        </tr>
         {#each schedules as schedule}
           <tr>
             <td>{schedule.name}</td>
@@ -133,11 +147,13 @@
                 schedule.scheduleTime
               )} UTC
             </td>
-            <td
-              ><button type="button" on:click={() => gotoEdit(schedule)}>
+            <td>{formatDatetime(schedule.scheduleStart)}</td>
+            <td>{formatDatetime(schedule.scheduleEnd)}</td>
+            <td>
+              <button type="button" on:click={() => gotoEdit(schedule)}>
                 Edit
-              </button></td
-            >
+              </button>
+            </td>
             <td>
               <button type="button" on:click={() => handleDelete(schedule.id)}>
                 Delete
