@@ -22,7 +22,8 @@ app.config.from_pyfile("config.py")
 CORS(app)
 
 api.HOST = app.config["HOST"]
-Db.create_tables(app)
+with Db() as db:
+    db.create_tables(app)
 auth = Auth(app)
 SchedulerThread(app.config["LICHESS_API_KEY"], app.logger).start()
 

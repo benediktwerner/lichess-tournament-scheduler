@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS schedules (
     scheduleEnd INT, -- unix time in secs when to stop scheduling this tournament
     name TEXT NOT NULL,
     team TEXT NOT NULL,
-    clock INT NOT NULL,
+    clock FLOAT NOT NULL,
     increment INT NOT NULL,
     minutes INT NOT NULL,
     variant TEXT NOT NULL,

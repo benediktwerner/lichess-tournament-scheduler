@@ -10,15 +10,42 @@ from typing import Any, List, Optional
 from flask import Flask
 
 DATABASE = "database.sqlite"
+VERSION = 1
 
 
 class Db:
-    @staticmethod
-    def create_tables(app: Flask) -> None:
-        with Db() as db:
-            with db.db as conn:
+    def create_tables(self, app: Flask) -> None:
+        if not self._query("SELECT * FROM sqlite_schema"):
+            app.logger.info("No tables. Initializing database schema.")
+            with self.db as trans:
                 with app.open_resource("schema.sql", mode="r") as f:
-                    conn.executescript(f.read())
+                    trans.executescript(f.read())
+            return
+
+        version = self._version()
+        if version == VERSION:
+            return
+
+        if version > VERSION:
+            raise Exception(
+                f"Db schema version is {version} which is higher than the latest known version ({VERSION})."
+            )
+
+        app.logger.info(f"Db schema version is {version}. Migrating up to {VERSION}.")
+
+        with self.db as trans:
+            while version < VERSION:
+                version += 1
+                app.logger.info(f"Migrating to {version}")
+                with app.open_resource(f"migrations/{version}.sql", mode="r") as f:
+                    trans.executescript(f.read())
+            trans.execute(f"PRAGMA user_version = {VERSION}")
+
+    def _version(self) -> int:
+        version = self._query_one("PRAGMA user_version")
+        if version is None:
+            raise Exception("pragma user_version returned None")
+        return version[0]
 
     def __enter__(self) -> Db:
         self.db = sqlite3.connect(DATABASE)
@@ -173,7 +200,7 @@ class Db:
 class Schedule:
     name: str
     team: str
-    clock: int
+    clock: float
     increment: int
     minutes: int  # duration
     variant: str
@@ -203,7 +230,7 @@ class Schedule:
         return Schedule(
             get_or_raise(j, "name", str),
             get_or_raise(j, "team", str),
-            get_or_raise(j, "clock", int),
+            float(get_or_raise(j, "clock", (int, float))),
             get_or_raise(j, "increment", int),
             get_or_raise(j, "minutes", int),
             get_or_raise(j, "variant", str),
@@ -291,7 +318,7 @@ class ParseError(Exception):
     pass
 
 
-def get_or_raise(j: dict, key: str, typ: type) -> Any:
+def get_or_raise(j: dict, key: str, typ: type | tuple[type, type]) -> Any:
     if key not in j:
         raise ParseError(f"Missing key: {key}")
     val = j[key]
