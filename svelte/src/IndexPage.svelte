@@ -6,7 +6,7 @@
     SCHEDULE_NAMES,
     VARIANT_NAMES,
   } from './config';
-  import { formatDuration, formatTime, formatUntil } from './utils';
+  import { formatDuration, formatTime, formatUntil, sleep } from './utils';
 
   export let token: string;
   export let gotoCreate: (team: string) => void;
@@ -26,7 +26,9 @@
     }
   }
 
-  const loadCreatedForTeam = async (team: string) => {
+  const loadCreatedForTeam = async (team: string, delay?: number) => {
+    if (delay) await sleep(delay);
+
     const resp = await fetch(LICHESS_HOST + `/api/team/${team}/arena`);
     const text = await resp.text();
     const arenas = [];
@@ -56,7 +58,9 @@
       teams = await resp.json();
       if (reloadCreated) {
         let todo = [];
-        for (const [team, _] of teams) todo.push(loadCreatedForTeam(team));
+        for (const [i, [team, _]] of teams.entries()) {
+          todo.push(loadCreatedForTeam(team, i * 1000));
+        }
         await Promise.all(todo);
       }
     } else {

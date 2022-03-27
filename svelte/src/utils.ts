@@ -23,3 +23,7 @@ export const formatDuration = (minutes: number) => {
   }
   return minutes + ' minutes';
 };
+
+export const sleep = async (delay: number) => {
+  await new Promise((resolve) => setTimeout(resolve, delay));
+};
