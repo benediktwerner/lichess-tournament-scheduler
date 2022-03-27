@@ -15,7 +15,8 @@ VERSION = 1
 
 class Db:
     def create_tables(self, app: Flask) -> None:
-        if not self._query("SELECT * FROM sqlite_schema"):
+        sqlite_schema = "sqlite_schema" if sqlite3.sqlite_version_info >= (3, 33, 0) else "sqlite_master"
+        if not self._query(f"SELECT * FROM {sqlite_schema}"):
             app.logger.info("No tables. Initializing database schema.")
             with self.db as trans:
                 with app.open_resource("schema.sql", mode="r") as f:
