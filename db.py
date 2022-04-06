@@ -250,7 +250,6 @@ class Schedule:
         )
 
     def next_time(self) -> Optional[int]:
-        now = time()
         date = datetime.utcnow()
         new = date.replace(
             hour=self.scheduleHour,

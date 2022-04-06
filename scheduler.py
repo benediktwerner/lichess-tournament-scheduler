@@ -25,7 +25,9 @@ class SchedulerThread(Thread):
             scheduled = ScheduledCache()
             for s in schedules:
                 nxt = s.next_time()
-                if nxt is None or nxt < now - 60 * 60 or now + 24 * 60 * 60 < now:
+                # don't schedule if starting too soon (in <1h)
+                # or in more than 24h
+                if nxt is None or nxt < now + 60 * 60 or now + 24 * 60 * 60 < nxt:
                     continue
                 if scheduled.is_scheduled(s, nxt):
                     continue
