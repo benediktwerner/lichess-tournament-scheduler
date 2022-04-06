@@ -5,17 +5,21 @@ from calendar import timegm
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from time import time
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Tuple
 
 from flask import Flask
 
 DATABASE = "database.sqlite"
-VERSION = 1
+VERSION = 2
 
 
 class Db:
     def create_tables(self, app: Flask) -> None:
-        sqlite_schema = "sqlite_schema" if sqlite3.sqlite_version_info >= (3, 33, 0) else "sqlite_master"
+        sqlite_schema = (
+            "sqlite_schema"
+            if sqlite3.sqlite_version_info >= (3, 33, 0)
+            else "sqlite_master"
+        )
         if not self._query(f"SELECT * FROM {sqlite_schema}"):
             app.logger.info("No tables. Initializing database schema.")
             with self.db as trans:
@@ -195,6 +199,28 @@ class Db:
     def delete_schedule(self, id: int) -> None:
         with self.db as conn:
             conn.execute("DELETE FROM schedules WHERE id = ?", (id,))
+
+    def add_log(self, text: str) -> None:
+        with self.db as conn:
+            conn.execute(
+                """INSERT INTO logs (
+                    text,
+                    time
+                   ) VALUES (?, ?)
+                """,
+                (text, int(time() * 1000)),
+            )
+
+    def clean_logs(self) -> None:
+        with self.db as conn:
+            conn.execute(
+                "DELETE FROM logs WHERE time < ?",
+                (int(time() * 1_000_000) - 7 * 24 * 60 * 60 * 1_000_000,),
+            )
+
+    def logs(self) -> List[Tuple[int, str]]:
+        logs = self._query("SELECT * FROM logs")
+        return [(r["time"], r["text"]) for r in logs]
 
 
 @dataclass

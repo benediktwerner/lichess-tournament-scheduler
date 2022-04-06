@@ -31,15 +31,21 @@ class SchedulerThread(Thread):
                     continue
                 if scheduled.is_scheduled(s, nxt):
                     continue
+                db.add_log(f"Trying to create {s.name} for {s.team}")
                 id = api.schedule_arena(s, nxt, self.api_key)
                 db.insert_created(id, s.team, nxt)
+                db.add_log(f"Created {s.name}")
                 sleep(10)
 
     def run(self) -> None:
         while True:
+            with Db() as db:
+                db.clean_logs()
+                db.add_log("Running scheduling")
             try:
                 self.schedule_next_arenas()
             except Exception as e:
+                db.add_log("Error during scheduling")
                 self.logger.error(f"Error during tournament creation: {e}")
                 if hasattr(e, "response"):
                     try:

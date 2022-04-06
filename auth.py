@@ -24,6 +24,10 @@ class User:
         if not self.is_admin and team not in self.teams:
             abort(403)
 
+    def as_admin(self) -> None:
+        if not self.is_admin:
+            abort(403)
+
     @staticmethod
     def plain(teams: List[str]) -> User:
         return User(False, teams)

@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
+from datetime import datetime
 
 from flask import Flask, abort, jsonify, request
 from flask_cors import CORS
@@ -18,6 +20,7 @@ OK_RESPONSE = '{"ok":true}'
 
 app = Flask(__name__)
 app.config.from_pyfile("config.py")
+app.logger.setLevel(logging.INFO)
 
 CORS(app)
 
@@ -31,10 +34,12 @@ SchedulerThread(app.config["LICHESS_API_KEY"], app.logger).start()
 @app.errorhandler(HTTPException)
 def error_bad_request(e: Any) -> Any:
     response = e.get_response()
-    response.data = json.dumps({
-        "name": e.name,
-        "description": e.description,
-    })
+    response.data = json.dumps(
+        {
+            "name": e.name,
+            "description": e.description,
+        }
+    )
     response.content_type = "application/json"
     return response
 
@@ -82,7 +87,7 @@ def edit() -> str:
 
     with Db() as db:
         db.update_schedule(schedule)
-    
+
     return OK_RESPONSE
 
 
@@ -97,12 +102,16 @@ def delete(id: int) -> str:
 
     return OK_RESPONSE
 
+
 @app.route("/cancel/<id>", methods=["POST"])
 def cancel(id: str) -> str:
     with Db() as db:
         team = db.team_of_created(id)
         if team is None:
-            abort(404, description="This tournament either doesn't exist or wasn't created by the scheduler")
+            abort(
+                404,
+                description="This tournament either doesn't exist or wasn't created by the scheduler",
+            )
         auth().for_team(team)
         try:
             api.terminate_arena(id, app.config["LICHESS_API_KEY"])
@@ -112,3 +121,16 @@ def cancel(id: str) -> str:
 
         db.delete_created(id)
         return OK_RESPONSE
+
+
+@app.route("/logs", methods=["GET"])
+def logs() -> str:
+    auth().as_admin()
+
+    with Db() as db:
+        logs = db.logs()
+
+    return "\n".join(
+        f"[{datetime.utcfromtimestamp(time / 1_000_000):%Y-%m-%d %H:%M:%S %f}] {text}"
+        for time, text in logs
+    )

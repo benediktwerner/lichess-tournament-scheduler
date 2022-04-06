@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS schedules (
+CREATE TABLE schedules (
     id INTEGER NOT NULL PRIMARY KEY,
     scheduleDay INT NOT NULL, -- 0 every day, 1-7 on that weekday
     scheduleTime INT NOT NULL, -- in UTC minutes
@@ -20,8 +20,13 @@ CREATE TABLE IF NOT EXISTS schedules (
     minGames INT
 );
 
-CREATE TABLE IF NOT EXISTS createdArenas (
+CREATE TABLE createdArenas (
     id TEXT NOT NULL,
     team TEXT NOT NULL,
+    time INT NOT NULL
+);
+
+CREATE TABLE logs (
+    text TEXT NOT NULL,
     time INT NOT NULL
 );
