@@ -88,6 +88,10 @@ def edit() -> str:
     with Db() as db:
         db.update_schedule(schedule)
 
+        if schedule.is_team_battle:
+            for id in db.created_with_schedule(schedule.id):
+                api.update_team_battle(id, schedule, app.config["LICHESS_API_KEY"])
+
     return OK_RESPONSE
 
 

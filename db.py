@@ -11,7 +11,7 @@ import re
 from flask import Flask
 
 DATABASE = "database.sqlite"
-VERSION = 4
+VERSION = 5
 
 
 class Db:
@@ -68,16 +68,17 @@ class Db:
         result = self._query(query, args)
         return result[0] if result else None
 
-    def insert_created(self, id: str, team: str, t: int) -> None:
+    def insert_created(self, id: str, schedule_id: int, team: str, t: int) -> None:
         with self.db as conn:
             conn.execute(
                 """INSERT INTO createdArenas (
                     id,
+                    scheduleId,
                     team,
                     time
-                   ) VALUES (?, ?, ?)
+                   ) VALUES (?, ?, ?, ?)
                 """,
-                (id, team, t),
+                (id, schedule_id, team, t),
             )
 
     def delete_created(self, id: str) -> None:
@@ -93,6 +94,13 @@ class Db:
         if a:
             return str(a["team"])
         return None
+
+    def created_with_schedule(self, schedule_id: int) -> List[str]:
+        rows = self._query(
+            "SELECT id FROM createdArenas WHERE scheduleId = ? and time > ?",
+            (schedule_id, int(time())),
+        )
+        return [row["id"] for row in rows]
 
     def schedules(self) -> List[ScheduleWithId]:
         return [

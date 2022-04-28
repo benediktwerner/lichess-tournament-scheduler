@@ -7,7 +7,7 @@ from typing import List, Optional, Set
 
 import requests
 
-from db import Schedule
+from db import Schedule, ScheduleWithId
 
 HOST = "https://lichess.org"  # overridden from config in app.py
 ENDPOINT_TEAMS = "/api/team/of/{}"
@@ -113,6 +113,17 @@ def schedule_arena(s: Schedule, at: int, api_key: str) -> str:
         resp.raise_for_status()
 
     return id
+
+
+def update_team_battle(arena_id: str, schedule: ScheduleWithId, api_key: str) -> None:
+    teams = schedule.team_battle_teams()
+    leaders = schedule.teamBattleLeaders or 5
+    resp = requests.post(
+        HOST + ENDPOINT_TEAM_BATTLE.format(arena_id),
+        headers={"Authorization": f"Bearer {api_key}"},
+        data={"teams": ",".join(teams), "nbLeaders": leaders},
+    )
+    resp.raise_for_status()
 
 
 def terminate_arena(id: str, api_key: str) -> None:

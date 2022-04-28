@@ -37,7 +37,7 @@ class SchedulerThread(Thread):
                     continue
                 db.add_log(f"Trying to create {s.name} for {s.team}")
                 id = api.schedule_arena(s, nxt, self.api_key)
-                db.insert_created(id, s.team, nxt)
+                db.insert_created(id, s.id, s.team, nxt)
                 db.add_log(f"Created {s.name}")
                 sleep(10)
 
