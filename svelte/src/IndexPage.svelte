@@ -93,6 +93,13 @@
     return new Date(t * 1000).toISOString().slice(0, 16).replace('T', ' ');
   };
 
+  const formatSchedule = (day: number) => {
+    if (day < 8) return SCHEDULE_NAMES[day];
+    const unit = ['days', 'weeks', 'months'][Math.floor(day / 1000)];
+    const period = day % 1000;
+    return `Every ${period} ${unit}`;
+  };
+
   load(loadCreatedArenas);
 </script>
 
@@ -147,7 +154,7 @@
               {formatDuration(schedule.minutes)}
             </td>
             <td>
-              {SCHEDULE_NAMES[schedule.scheduleDay]} at {formatTime(
+              {formatSchedule(schedule.scheduleDay)} at {formatTime(
                 schedule.scheduleTime
               )} UTC
             </td>

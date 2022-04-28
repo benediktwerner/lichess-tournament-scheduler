@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
-from calendar import timegm
+from calendar import timegm, monthrange
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from time import time
@@ -254,6 +254,15 @@ class Schedule:
 
     @staticmethod
     def from_json(j: dict) -> Schedule:
+        scheduleDay = get_or_raise(j, "scheduleDay", int)
+        scheduleStart = get_opt_or_raise(j, "scheduleStart", int)
+        if scheduleDay < 0 or 7 < scheduleDay <= 1000 or scheduleDay >= 4000:
+            raise ParseError(f"Invalid value for scheduleDay: {scheduleDay}")
+        if scheduleDay > 1000:
+            if scheduleDay % 1000 == 0:
+                raise ParseError(f"Invalid value for scheduleDay: {scheduleDay}")
+            if scheduleStart is None:
+                raise ParseError("Missing scheduleStart for unregular period")
         return Schedule(
             get_or_raise(j, "name", str),
             get_or_raise(j, "team", str),
@@ -269,15 +278,15 @@ class Schedule:
             get_opt_or_raise(j, "minRating", int),
             get_opt_or_raise(j, "maxRating", int),
             get_opt_or_raise(j, "minGames", int),
-            get_or_raise(j, "scheduleDay", int),
+            scheduleDay,
             get_or_raise(j, "scheduleTime", int),
-            get_opt_or_raise(j, "scheduleStart", int),
+            scheduleStart,
             get_opt_or_raise(j, "scheduleEnd", int),
         )
 
     def next_time(self) -> Optional[int]:
-        date = datetime.utcnow()
-        new = date.replace(
+        now = datetime.utcnow()
+        new = now.replace(
             hour=self.scheduleHour,
             minute=self.scheduleMinute,
             second=0,
@@ -285,12 +294,36 @@ class Schedule:
         )
 
         if self.scheduleDay == 0:
-            if new < date:
+            if new < now:
                 new += timedelta(days=1)
-        else:
-            new += timedelta(days=self.scheduleDay - date.isoweekday())
-            if new < date:
+        elif self.scheduleDay < 8:
+            new += timedelta(days=self.scheduleDay - now.isoweekday())
+            if new < now:
                 new += timedelta(days=7)
+        else:
+            if not self.scheduleStart:
+                return None
+            new = datetime.utcfromtimestamp(self.scheduleStart).replace(
+                hour=self.scheduleHour,
+                minute=self.scheduleMinute,
+                second=0,
+                microsecond=0,
+            )
+            unit = self.scheduleDay // 1000
+            period = self.scheduleDay % 1000
+            if period <= 0:
+                return None
+            while new < now:
+                if unit == 1:  # days
+                    new += timedelta(days=period)
+                elif unit == 2:  # weeks
+                    new += timedelta(weeks=period)
+                else:  # months
+                    month = new.month - 1 + period
+                    year = new.year + month // 12
+                    month = month % 12 + 1
+                    day = min(new.day, monthrange(year, month)[1])
+                    new = new.replace(year=year, month=month, day=day)
 
         nxt = timegm(new.timetuple())
 

@@ -39,7 +39,9 @@
   let minRatingEnabled = !!minRating;
   let maxRatingEnabled = !!maxRating;
   let minGamesEnabled = !!minGames;
-  let scheduleDay = schedule?.scheduleDay ?? 0;
+  const day = schedule?.scheduleDay ?? 0;
+  let scheduleDay = day >= 1000 ? Math.floor(day / 1000) + 7 : day;
+  let scheduleStep = day >= 1000 ? day % 1000 : 1;
   let scheduleTime = schedule ? formatTime(schedule.scheduleTime) : null;
   let scheduleStart = formatDatetime(schedule?.scheduleStart);
   let scheduleEnd = formatDatetime(schedule?.scheduleEnd);
@@ -72,10 +74,11 @@
       minRating: minRatingEnabled && minRating ? minRating : null,
       maxRating: maxRatingEnabled && maxRating ? maxRating : null,
       minGames: minGamesEnabled && minGames ? minGames : null,
-      scheduleDay,
+      scheduleDay:
+        scheduleDay > 7 ? (scheduleDay - 7) * 1000 + scheduleStep : scheduleDay,
       scheduleTime: time,
       scheduleStart:
-        scheduleStartEnabled && scheduleStart
+        (scheduleStartEnabled && scheduleStart) || scheduleDay > 7
           ? Math.floor(+new Date(scheduleStart) / 1000)
           : null,
       scheduleEnd:
@@ -233,6 +236,16 @@
             <option value={i}>{s}</option>
           {/each}
         </select>
+        {#if scheduleDay > 7}
+            <input
+              type="number"
+              min="1"
+              max="999"
+              step="1"
+              bind:value={scheduleStep}
+              required
+            />
+        {/if}
       </td>
     </tr>
     <tr>
@@ -242,11 +255,16 @@
     <tr>
       <td>Schedule start:</td>
       <td>
-        <input type="checkbox" bind:checked={scheduleStartEnabled} />
+        <input
+          type="checkbox"
+          bind:checked={scheduleStartEnabled}
+          disabled={scheduleDay > 7}
+        />
         <input
           type="datetime-local"
-          disabled={!scheduleStartEnabled}
+          disabled={!scheduleStartEnabled && scheduleDay < 8}
           bind:value={scheduleStart}
+          required={scheduleDay > 7}
         />
       </td>
     </tr>

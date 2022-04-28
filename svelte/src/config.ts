@@ -35,4 +35,7 @@ export const SCHEDULE_NAMES = [
   'Friday',
   'Saturday',
   'Sunday',
+  'Every x days',
+  'Every x weeks',
+  'Every x months',
 ];
