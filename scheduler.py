@@ -49,7 +49,8 @@ class SchedulerThread(Thread):
             try:
                 self.schedule_next_arenas()
             except Exception as e:
-                db.add_log("Error during scheduling")
+                with Db() as db:
+                    db.add_log("Error during scheduling")
                 self.logger.error(f"Error during tournament creation: {e}")
                 if hasattr(e, "response"):
                     try:
