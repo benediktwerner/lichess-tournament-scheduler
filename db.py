@@ -11,7 +11,7 @@ import re
 from flask import Flask
 
 DATABASE = "database.sqlite"
-VERSION = 5
+VERSION = 6
 
 
 class Db:
