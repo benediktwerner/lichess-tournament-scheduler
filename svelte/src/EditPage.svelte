@@ -47,6 +47,9 @@
   let scheduleEnd = formatDatetime(schedule?.scheduleEnd);
   let scheduleStartEnabled = !!scheduleStart;
   let scheduleEndEnabled = !!scheduleEnd;
+  let teamBattleTeams = schedule?.teamBattleTeams;
+  let teamBattleLeaders = schedule?.teamBattleLeaders;
+  let isTeamBattle = teamBattleTeams && teamBattleTeams.length > 0;
 
   const handleSave = async () => {
     if (!form) return;
@@ -85,6 +88,8 @@
         scheduleEndEnabled && scheduleEnd
           ? Math.floor(+new Date(scheduleEnd) / 1000)
           : null,
+      teamBattleTeams: isTeamBattle ? teamBattleTeams : null,
+      teamBattleLeaders: isTeamBattle ? teamBattleLeaders : null,
     };
 
     const resp = await fetch(API_HOST + (create ? '/create' : '/edit'), {
@@ -118,7 +123,7 @@
     </tr>
     <tr>
       <td>Description:<br />(optional)</td>
-      <td><textarea cols="30" rows="5">{description}</textarea></td>
+      <td><textarea cols="30" rows="5" bind:value={description} /></td>
     </tr>
     <tr>
       <td>Initial clock:</td>
@@ -237,14 +242,14 @@
           {/each}
         </select>
         {#if scheduleDay > 7}
-            <input
-              type="number"
-              min="1"
-              max="999"
-              step="1"
-              bind:value={scheduleStep}
-              required
-            />
+          <input
+            type="number"
+            min="1"
+            max="999"
+            step="1"
+            bind:value={scheduleStep}
+            required
+          />
         {/if}
       </td>
     </tr>
@@ -279,6 +284,32 @@
         />
       </td>
     </tr>
+    <tr>
+      <td>Team Battle:</td>
+      <td><input type="checkbox" bind:checked={isTeamBattle} /></td>
+    </tr>
+    {#if isTeamBattle}
+      <tr>
+        <td>Teams:</td>
+        <td>
+          <small>(one per line, first part must be the team id)</small><br />
+          <textarea cols="30" rows="5" bind:value={teamBattleTeams} required />
+        </td>
+      </tr>
+      <tr>
+        <td>Leaders:</td>
+        <td>
+          <input
+            type="number"
+            min="1"
+            max="1000"
+            step="1"
+            bind:value={teamBattleLeaders}
+            required
+          />
+        </td>
+      </tr>
+    {/if}
   </table>
   <br />
   <button type="button" on:click={handleSave}>

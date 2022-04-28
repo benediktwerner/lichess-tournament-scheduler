@@ -18,6 +18,8 @@ export interface Schedule {
   scheduleTime: number;
   scheduleStart?: number;
   scheduleEnd?: number;
+  teamBattleTeams?: string;
+  teamBattleLeaders?: number;
 }
 
 export interface Arena {

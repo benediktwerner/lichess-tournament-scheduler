@@ -9,12 +9,13 @@ import requests
 
 from db import Schedule
 
-HOST = "https://lichess.org"
+HOST = "https://lichess.org"  # overridden from config in app.py
 ENDPOINT_TEAMS = "/api/team/of/{}"
 ENDPOINT_TOKEN_TEST = "/api/token/test"
 ENDPOINT_TEAM_ARENAS = "/api/team/{}/arena"
 ENDPOINT_CREATE_ARENA = "/api/tournament"
 ENDPOINT_TERMINATE_ARENA = "/api/tournament/{}/terminate"
+ENDPOINT_TEAM_BATTLE = "/api/tournament/team-battle/{}"
 BOOL = ["false", "true"]
 
 
@@ -75,8 +76,11 @@ def schedule_arena(s: Schedule, at: int, api_key: str) -> str:
         "rated": BOOL[s.rated],
         "berserkable": BOOL[s.berserkable],
         "streakable": BOOL[s.streakable],
-        "conditions.teamMember.teamId": s.team,
     }
+    if s.is_team_battle:
+        data["teamBattleByTeam"] = s.team
+    else:
+        data["conditions.teamMember.teamId"] = s.team
     if s.position:
         data["position"] = s.position
     if s.description:
@@ -97,6 +101,17 @@ def schedule_arena(s: Schedule, at: int, api_key: str) -> str:
     id = resp.json().get("id")
     if not isinstance(id, str):
         raise Exception(f"Created arena has invalid id: {id}")
+
+    if s.is_team_battle:
+        teams = s.team_battle_teams()
+        leaders = s.teamBattleLeaders or 5
+        resp = requests.post(
+            HOST + ENDPOINT_TEAM_BATTLE.format(id),
+            headers={"Authorization": f"Bearer {api_key}"},
+            data={"teams": ",".join(teams), "nbLeaders": leaders},
+        )
+        resp.raise_for_status()
+
     return id
 
 

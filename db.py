@@ -6,11 +6,12 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from time import time
 from typing import Any, List, Optional, Tuple
+import re
 
 from flask import Flask
 
 DATABASE = "database.sqlite"
-VERSION = 2
+VERSION = 3
 
 
 class Db:
@@ -125,8 +126,10 @@ class Db:
                     scheduleDay,
                     scheduleTime,
                     scheduleStart,
-                    scheduleEnd
-                   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    scheduleEnd,
+                    teamBattleTeams,
+                    teamBattleLeaders
+                   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     s.name,
@@ -147,6 +150,8 @@ class Db:
                     s.scheduleTime,
                     s.scheduleStart,
                     s.scheduleEnd,
+                    s.teamBattleTeams,
+                    s.teamBattleLeaders,
                 ),
             )
 
@@ -170,7 +175,9 @@ class Db:
                     scheduleDay = ?,
                     scheduleTime = ?,
                     scheduleStart = ?,
-                    scheduleEnd = ?
+                    scheduleEnd = ?,
+                    teamBattleTeams = ?,
+                    teamBattleLeaders = ?
                    WHERE id = ? and team = ?
                 """,
                 (
@@ -191,6 +198,8 @@ class Db:
                     s.scheduleTime,
                     s.scheduleStart,
                     s.scheduleEnd,
+                    s.teamBattleTeams,
+                    s.teamBattleLeaders,
                     s.id,
                     s.team,
                 ),
@@ -243,6 +252,8 @@ class Schedule:
     scheduleTime: int
     scheduleStart: Optional[int]
     scheduleEnd: Optional[int]
+    teamBattleTeams: Optional[str]
+    teamBattleLeaders: Optional[int]
 
     @property
     def scheduleHour(self) -> int:
@@ -251,6 +262,21 @@ class Schedule:
     @property
     def scheduleMinute(self) -> int:
         return self.scheduleTime % 60
+
+    @property
+    def is_team_battle(self) -> bool:
+        return bool(self.teamBattleTeams)
+
+    def team_battle_teams(self) -> List[str]:
+        if not self.teamBattleTeams:
+            return []
+        teams = set(
+            line.strip().split()[0]
+            for line in self.teamBattleTeams.splitlines()
+            if line.strip()
+        )
+        teams.add(self.team)
+        return [t for t in teams if re.match(r"^[\w-]{2,}$", t)]
 
     @staticmethod
     def from_json(j: dict) -> Schedule:
@@ -282,6 +308,8 @@ class Schedule:
             get_or_raise(j, "scheduleTime", int),
             scheduleStart,
             get_opt_or_raise(j, "scheduleEnd", int),
+            get_opt_or_raise(j, "teamBattleTeams", str),
+            get_opt_or_raise(j, "teamBattleLeaders", int),
         )
 
     def next_time(self) -> Optional[int]:
@@ -369,6 +397,8 @@ class ScheduleWithId(Schedule):
             s.scheduleTime,
             s.scheduleStart,
             s.scheduleEnd,
+            s.teamBattleTeams,
+            s.teamBattleLeaders,
             get_or_raise(j, "id", int),
         )
 

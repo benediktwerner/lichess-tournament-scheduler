@@ -60,7 +60,10 @@ class ScheduledCache:
         self.cache: Dict[str, Set[Arena]] = {}
 
     def is_scheduled(self, s: Schedule, t: int) -> bool:
-        return Arena(s.name + " Arena", t) in self.get_arenas(s.team)
+        arenas = self.get_arenas(s.team)
+        arena = Arena(s.name + " Arena", t)
+        team_battle = Arena(s.name + " Team Battle", t)
+        return arena in arenas or team_battle in arenas
 
     def get_arenas(self, team: str) -> Set[Arena]:
         arenas = self.cache.get(team)

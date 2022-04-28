@@ -147,7 +147,10 @@
         </tr>
         {#each schedules as schedule}
           <tr>
-            <td>{schedule.name}</td>
+            <td>
+              {schedule.name}
+              {schedule.teamBattleTeams ? 'Team Battle' : 'Arena'}
+            </td>
             <td>{VARIANT_NAMES[schedule.variant]}</td>
             <td>{schedule.clock}+{schedule.increment}</td>
             <td>

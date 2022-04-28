@@ -17,7 +17,9 @@ CREATE TABLE schedules (
     description TEXT,
     minRating INT,
     maxRating INT,
-    minGames INT
+    minGames INT,
+    teamBattleTeams TEXT,
+    teamBattleLeaders INT
 );
 
 CREATE TABLE createdArenas (
