@@ -11,7 +11,7 @@ import re
 from flask import Flask
 
 DATABASE = "database.sqlite"
-VERSION = 3
+VERSION = 4
 
 
 class Db:
@@ -128,7 +128,8 @@ class Db:
                     scheduleStart,
                     scheduleEnd,
                     teamBattleTeams,
-                    teamBattleLeaders
+                    teamBattleLeaders,
+                    daysInAdvance
                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
@@ -152,6 +153,7 @@ class Db:
                     s.scheduleEnd,
                     s.teamBattleTeams,
                     s.teamBattleLeaders,
+                    s.daysInAdvance,
                 ),
             )
 
@@ -177,7 +179,8 @@ class Db:
                     scheduleStart = ?,
                     scheduleEnd = ?,
                     teamBattleTeams = ?,
-                    teamBattleLeaders = ?
+                    teamBattleLeaders = ?,
+                    daysInAdvance = ?
                    WHERE id = ? and team = ?
                 """,
                 (
@@ -200,6 +203,7 @@ class Db:
                     s.scheduleEnd,
                     s.teamBattleTeams,
                     s.teamBattleLeaders,
+                    s.daysInAdvance,
                     s.id,
                     s.team,
                 ),
@@ -254,6 +258,7 @@ class Schedule:
     scheduleEnd: Optional[int]
     teamBattleTeams: Optional[str]
     teamBattleLeaders: Optional[int]
+    daysInAdvance: Optional[int]
 
     @property
     def scheduleHour(self) -> int:
@@ -266,6 +271,10 @@ class Schedule:
     @property
     def is_team_battle(self) -> bool:
         return bool(self.teamBattleTeams)
+
+    @property
+    def days_in_advance(self) -> int:
+        return self.daysInAdvance or 1
 
     def team_battle_teams(self) -> List[str]:
         if not self.teamBattleTeams:
@@ -310,6 +319,7 @@ class Schedule:
             get_opt_or_raise(j, "scheduleEnd", int),
             get_opt_or_raise(j, "teamBattleTeams", str),
             get_opt_or_raise(j, "teamBattleLeaders", int),
+            get_opt_or_raise(j, "daysInAdvance", int),
         )
 
     def next_time(self) -> Optional[int]:
@@ -399,6 +409,7 @@ class ScheduleWithId(Schedule):
             s.scheduleEnd,
             s.teamBattleTeams,
             s.teamBattleLeaders,
+            s.daysInAdvance,
             get_or_raise(j, "id", int),
         )
 

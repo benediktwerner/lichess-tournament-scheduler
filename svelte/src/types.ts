@@ -20,6 +20,7 @@ export interface Schedule {
   scheduleEnd?: number;
   teamBattleTeams?: string;
   teamBattleLeaders?: number;
+  daysInAdvance?: number;
 }
 
 export interface Arena {

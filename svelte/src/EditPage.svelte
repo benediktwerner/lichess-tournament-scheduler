@@ -50,6 +50,7 @@
   let teamBattleTeams = schedule?.teamBattleTeams;
   let teamBattleLeaders = schedule?.teamBattleLeaders;
   let isTeamBattle = teamBattleTeams && teamBattleTeams.length > 0;
+  let daysInAdvance = schedule?.daysInAdvance ?? 1;
 
   const handleSave = async () => {
     if (!form) return;
@@ -90,6 +91,7 @@
           : null,
       teamBattleTeams: isTeamBattle ? teamBattleTeams : null,
       teamBattleLeaders: isTeamBattle ? teamBattleLeaders : null,
+      daysInAdvance,
     };
 
     const resp = await fetch(API_HOST + (create ? '/create' : '/edit'), {
@@ -256,6 +258,19 @@
     <tr>
       <td>Time (UTC):</td>
       <td><input type="time" bind:value={scheduleTime} required /></td>
+    </tr>
+    <tr>
+      <td>Create:</td>
+      <td>
+        <input
+          type="number"
+          min="1"
+          max="1000"
+          step="1"
+          bind:value={daysInAdvance}
+          required
+        /> day(s) before start
+      </td>
     </tr>
     <tr>
       <td>Schedule start:</td>
