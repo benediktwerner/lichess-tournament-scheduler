@@ -95,7 +95,7 @@
 
   const formatSchedule = (day: number) => {
     if (day < 8) return SCHEDULE_NAMES[day];
-    const unit = ['days', 'weeks', 'months'][Math.floor(day / 1000)];
+    const unit = ['days', 'weeks', 'months'][Math.floor(day / 1000) - 1];
     const period = day % 1000;
     return `Every ${period} ${unit}`;
   };
