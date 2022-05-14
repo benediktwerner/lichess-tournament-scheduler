@@ -6,7 +6,7 @@
     VARIANT_NAMES,
   } from './config';
   import type { Schedule } from './types';
-  import { formatTime } from './utils';
+  import { formatDate, formatEndDate, formatTime, SECS_IN_DAY } from './utils';
 
   export let token: string;
   export let gotoIndex: () => void;
@@ -17,11 +17,6 @@
 
   const create = schedule === null;
   const id = create ? 0 : schedule.id;
-
-  const formatDatetime = (t?: number) => {
-    if (!t) return t;
-    return new Date(t * 1000).toISOString().slice(0, 16);
-  };
 
   let name = schedule?.name ?? '';
   let description = schedule?.description ?? '';
@@ -43,8 +38,8 @@
   let scheduleDay = day >= 1000 ? Math.floor(day / 1000) + 7 : day;
   let scheduleStep = day >= 1000 ? day % 1000 : 1;
   let scheduleTime = schedule ? formatTime(schedule.scheduleTime) : null;
-  let scheduleStart = formatDatetime(schedule?.scheduleStart);
-  let scheduleEnd = formatDatetime(schedule?.scheduleEnd);
+  let scheduleStart = formatDate(schedule?.scheduleStart);
+  let scheduleEnd = formatEndDate(schedule?.scheduleEnd);
   let scheduleStartEnabled = !!scheduleStart;
   let scheduleEndEnabled = !!scheduleEnd;
   let teamBattleTeams = schedule?.teamBattleTeams;
@@ -87,7 +82,7 @@
           : null,
       scheduleEnd:
         scheduleEndEnabled && scheduleEnd
-          ? Math.floor(+new Date(scheduleEnd) / 1000)
+          ? Math.floor(+new Date(scheduleEnd) / 1000) + SECS_IN_DAY
           : null,
       teamBattleTeams: isTeamBattle ? teamBattleTeams : null,
       teamBattleLeaders: isTeamBattle ? teamBattleLeaders : null,
@@ -174,17 +169,19 @@
       <td>Rated:</td>
       <td><input type="checkbox" bind:checked={rated} /></td>
     </tr>
-    <tr>
-      <td>FEN (optional):</td>
-      <td
-        ><input
-          type="text"
-          name="position"
-          size="60"
-          bind:value={position}
-        /></td
-      >
-    </tr>
+    {#if variant === 'standard'}
+      <tr>
+        <td>FEN (optional):</td>
+        <td
+          ><input
+            type="text"
+            name="position"
+            size="60"
+            bind:value={position}
+          /></td
+        >
+      </tr>
+    {/if}
     <tr>
       <td>Berserkable:</td>
       <td><input type="checkbox" bind:checked={berserkable} /></td>
@@ -260,6 +257,41 @@
       <td><input type="time" bind:value={scheduleTime} required /></td>
     </tr>
     <tr>
+      <td>{scheduleDay < 8 ? 'Schedule start' : 'Starting from'}:</td>
+      <td>
+        {#if scheduleDay < 8}
+          <input type="checkbox" bind:checked={scheduleStartEnabled} />
+        {/if}
+        <input
+          type="date"
+          disabled={!scheduleStartEnabled && scheduleDay < 8}
+          bind:value={scheduleStart}
+          required={scheduleDay > 7}
+        />
+        {#if scheduleDay < 8}
+          <small>
+            (if enabled, only schedule tournaments that will start on this day
+            or later)
+          </small>
+        {/if}
+      </td>
+    </tr>
+    <tr>
+      <td>Schedule end:</td>
+      <td>
+        <input type="checkbox" bind:checked={scheduleEndEnabled} />
+        <input
+          type="date"
+          disabled={!scheduleEndEnabled}
+          bind:value={scheduleEnd}
+        />
+        <small>
+          (if enabled, only schedule tournaments that will start on this day or
+          earlier)
+        </small>
+      </td>
+    </tr>
+    <tr>
       <td>Create:</td>
       <td>
         <input
@@ -270,33 +302,6 @@
           bind:value={daysInAdvance}
           required
         /> day(s) before start
-      </td>
-    </tr>
-    <tr>
-      <td>Schedule start:</td>
-      <td>
-        <input
-          type="checkbox"
-          bind:checked={scheduleStartEnabled}
-          disabled={scheduleDay > 7}
-        />
-        <input
-          type="datetime-local"
-          disabled={!scheduleStartEnabled && scheduleDay < 8}
-          bind:value={scheduleStart}
-          required={scheduleDay > 7}
-        />
-      </td>
-    </tr>
-    <tr>
-      <td>Schedule end:</td>
-      <td>
-        <input type="checkbox" bind:checked={scheduleEndEnabled} />
-        <input
-          type="datetime-local"
-          disabled={!scheduleEndEnabled}
-          bind:value={scheduleEnd}
-        />
       </td>
     </tr>
     <tr>

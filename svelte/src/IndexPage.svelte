@@ -6,7 +6,14 @@
     SCHEDULE_NAMES,
     VARIANT_NAMES,
   } from './config';
-  import { formatDuration, formatTime, formatUntil, sleep } from './utils';
+  import {
+    formatDate,
+    formatDuration,
+    formatEndDate,
+    formatTime,
+    formatUntil,
+    sleep,
+  } from './utils';
 
   export let token: string;
   export let gotoCreate: (team: string) => void;
@@ -88,11 +95,6 @@
     else alert(`Error: ${await resp.text()}`);
   };
 
-  const formatDatetime = (t?: number) => {
-    if (!t) return '';
-    return new Date(t * 1000).toISOString().slice(0, 16).replace('T', ' ');
-  };
-
   const formatSchedule = (day: number) => {
     if (day < 8) return SCHEDULE_NAMES[day];
     const unit = ['days', 'weeks', 'months'][Math.floor(day / 1000) - 1];
@@ -106,8 +108,6 @@
 {#if !teams}
   <h4>Loading ...</h4>
 {:else}
-  <small>Scheduled tournaments will be created 24h in advance</small>
-
   {#each teams as [team, schedules], i}
     <h2>
       <a href="https://lichess.org/team/{team}" target="_blank">{team}</a>
@@ -161,8 +161,8 @@
                 schedule.scheduleTime
               )} UTC
             </td>
-            <td>{formatDatetime(schedule.scheduleStart)}</td>
-            <td>{formatDatetime(schedule.scheduleEnd)}</td>
+            <td>{formatDate(schedule.scheduleStart)}</td>
+            <td>{formatEndDate(schedule.scheduleEnd)}</td>
             <td>
               <button type="button" on:click={() => gotoEdit(schedule)}>
                 Edit
