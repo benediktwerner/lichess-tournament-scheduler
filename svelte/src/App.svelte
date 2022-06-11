@@ -1,7 +1,7 @@
 <script lang="ts">
   import { OAuth2AuthCodePKCE } from '@bity/oauth2-auth-code-pkce';
   import { LICHESS_HOST } from './config';
-  import Inner from './Inner.svelte';
+  import Router from './Router.svelte';
 
   const baseUrl = () => {
     const url = new URL(location.href);
@@ -65,7 +65,7 @@
 
 {#if accessContext?.token}
   <button class="logout" type="button" on:click={handleLogout}>Logout</button>
-  <Inner token={accessContext.token.value} />
+  <Router token={accessContext.token.value} />
 {:else}
   <button type="button" on:click={handleLogin}>Login with Lichess</button>
 {/if}
