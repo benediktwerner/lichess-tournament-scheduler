@@ -33,11 +33,22 @@
     }
   }
 
+  const createdIdsPromise = (async () => {
+    const resp = await fetch(API_HOST + '/createdIds', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (resp.ok) {
+      const json = await resp.json();
+      return new Set(json as string[]);
+    } else return new Set<string>();
+  })();
+
   const loadCreatedForTeam = async (team: string, delay?: number) => {
     if (delay) await sleep(delay);
 
     const resp = await fetch(LICHESS_HOST + `/api/team/${team}/arena`);
     const text = await resp.text();
+    const createdIds = await createdIdsPromise;
     const arenas = [];
     for (const line of text.split(/\r?\n/g)) {
       if (!line) continue;
@@ -45,7 +56,8 @@
       if (
         arena.secondsToStart &&
         arena.secondsToStart > 0 &&
-        arena.system === 'arena'
+        arena.system === 'arena' &&
+        createdIds.has(arena.id)
       ) {
         arenas.push(arena);
       }

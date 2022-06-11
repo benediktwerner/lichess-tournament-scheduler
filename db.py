@@ -95,6 +95,10 @@ class Db:
             return str(a["team"])
         return None
 
+    def created_ids(self) -> List[str]:
+        rows = self._query("SELECT id FROM createdArenas", ())
+        return [row["id"] for row in rows]
+
     def created_with_schedule(self, schedule_id: int) -> List[str]:
         rows = self._query(
             "SELECT id FROM createdArenas WHERE scheduleId = ? and time > ?",

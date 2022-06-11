@@ -55,6 +55,13 @@ def schedules() -> Any:
         return jsonify([(team, by_team[team]) for team in teams])
 
 
+@app.route("/createdIds")
+def createdIds() -> Any:
+    auth()
+    with Db() as db:
+        return jsonify(db.created_ids())
+
+
 @app.route("/create", methods=["POST"])
 def create() -> str:
     try:
