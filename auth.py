@@ -20,12 +20,16 @@ class User:
     is_admin: bool
     teams: List[str]
 
-    def for_team(self, team: str) -> None:
+    def assert_for_team(self, team: str) -> None:
         if not self.is_admin and team not in self.teams:
             abort(403)
 
-    def as_admin(self) -> None:
+    def assert_admin(self) -> None:
         if not self.is_admin:
+            abort(403)
+
+    def assert_leader_or_admin(self) -> None:
+        if not self.is_admin and not self.teams:
             abort(403)
 
     @staticmethod
@@ -81,6 +85,7 @@ class Auth:
 
         cached = self.get_from_cache(token)
         if cached:
+            cached.assert_leader_or_admin()
             return cached
 
         if self.rate_limited_until > time():
@@ -103,6 +108,7 @@ class Auth:
                 ]
                 user = User.plain(teams)
             self.add_cache(token, user)
+            user.assert_leader_or_admin()
             return user
         except HTTPError as e:
             current_app.logger.error(f"Error during auth requests to Lichess: {e}")

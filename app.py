@@ -65,7 +65,7 @@ def create() -> str:
     except ParseError as e:
         abort(400, description=str(e))
 
-    auth().for_team(schedule.team)
+    auth().assert_for_team(schedule.team)
 
     with Db() as db:
         db.insert_schedule(schedule)
@@ -83,7 +83,7 @@ def edit() -> str:
     except ParseError as e:
         abort(400, description=str(e))
 
-    auth().for_team(schedule.team)
+    auth().assert_for_team(schedule.team)
 
     with Db() as db:
         db.update_schedule(schedule)
@@ -101,7 +101,7 @@ def delete(id: int) -> str:
         team = db.team_of_schedule(id)
         if team is None:
             abort(404)
-        auth().for_team(team)
+        auth().assert_for_team(team)
         db.delete_schedule(id)
 
     return OK_RESPONSE
@@ -116,7 +116,7 @@ def cancel(id: str) -> str:
                 404,
                 description="This tournament either doesn't exist or wasn't created by the scheduler",
             )
-        auth().for_team(team)
+        auth().assert_for_team(team)
         try:
             api.terminate_arena(id, app.config["LICHESS_API_KEY"])
         except Exception as e:
@@ -129,7 +129,7 @@ def cancel(id: str) -> str:
 
 @app.route("/logs", methods=["GET"])
 def logs() -> str:
-    auth().as_admin()
+    auth().assert_admin()
 
     with Db() as db:
         logs = db.logs()
