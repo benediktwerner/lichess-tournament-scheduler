@@ -4,6 +4,7 @@ import sqlite3
 from calendar import timegm, monthrange
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from time import time
 from typing import Any, List, Optional
 import re
 
@@ -86,7 +87,7 @@ class Schedule:
             get_opt_or_raise(j, "daysInAdvance", int),
         )
 
-    def next_time(self) -> Optional[int]:
+    def next_times(self) -> List[int]:
         now = datetime.utcnow()
         new = now.replace(
             hour=self.scheduleHour,
@@ -94,17 +95,16 @@ class Schedule:
             second=0,
             microsecond=0,
         )
+        delta: timedelta | int
 
         if self.scheduleDay == 0:
-            if new < now:
-                new += timedelta(days=1)
+            delta = timedelta(days=1)
         elif self.scheduleDay < 8:
             new += timedelta(days=self.scheduleDay - now.isoweekday())
-            if new < now:
-                new += timedelta(days=7)
+            delta = timedelta(days=7)
         else:
             if not self.scheduleStart:
-                return None
+                return []
             new = datetime.utcfromtimestamp(self.scheduleStart).replace(
                 hour=self.scheduleHour,
                 minute=self.scheduleMinute,
@@ -114,27 +114,31 @@ class Schedule:
             unit = self.scheduleDay // 1000
             period = self.scheduleDay % 1000
             if period <= 0:
-                return None
-            while new < now:
-                if unit == 1:  # days
-                    new += timedelta(days=period)
-                elif unit == 2:  # weeks
-                    new += timedelta(weeks=period)
-                else:  # months
-                    month = new.month - 1 + period
-                    year = new.year + month // 12
-                    month = month % 12 + 1
-                    day = min(new.day, monthrange(year, month)[1])
-                    new = new.replace(year=year, month=month, day=day)
+                return []
+            if unit == 1:  # days
+                delta = timedelta(days=period)
+            elif unit == 2:  # weeks
+                delta = timedelta(weeks=period)
+            else:  # months
+                delta = period
+
+        while new < now:
+            new = add_delta(new, delta)
 
         nxt = timegm(new.timetuple())
 
-        if self.scheduleStart and nxt < self.scheduleStart:
-            return None
-        if self.scheduleEnd and self.scheduleEnd < nxt:
-            return None
+        endTime = int(time()) + self.days_in_advance * 24 * 60 * 60
+        if self.scheduleEnd and self.scheduleEnd < endTime:
+            endTime = self.scheduleEnd
 
-        return nxt
+        times = []
+        while nxt <= endTime:
+            if not self.scheduleStart or self.scheduleStart <= nxt:
+                times.append(nxt)
+            new = add_delta(new, delta)
+            nxt = timegm(new.timetuple())
+
+        return times
 
 
 @dataclass
@@ -222,7 +226,7 @@ class ArenaEdit:
             s.minGames,
             s.is_team_battle,
             s.teamBattleTeams,
-            s.teamBattleLeaders
+            s.teamBattleLeaders,
         )
 
     @staticmethod
@@ -268,13 +272,25 @@ def get_opt_or_raise(j: dict, key: str, typ: type) -> Any:
         raise ParseError(f"Invalid value for {key}: {val}")
     return val
 
+
 def extract_team_battle_teams(team: str, ts: Optional[str]) -> List[str]:
     if not ts:
         return []
-    teams = set(
-        line.strip().split()[0]
-        for line in ts.splitlines()
-        if line.strip()
-    )
+    teams = set(line.strip().split()[0] for line in ts.splitlines() if line.strip())
     teams.add(team)
     return [t for t in teams if re.match(r"^[\w-]{2,}$", t)]
+
+
+def add_months(date: datetime, amnt: int) -> datetime:
+    month = date.month - 1 + amnt
+    year = date.year + month // 12
+    month = month % 12 + 1
+    day = min(date.day, monthrange(year, month)[1])
+    return date.replace(year=year, month=month, day=day)
+
+
+def add_delta(date: datetime, delta: timedelta | int) -> datetime:
+    if isinstance(delta, int):
+        return add_months(date, delta)
+    else:
+        return date + delta

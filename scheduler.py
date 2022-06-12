@@ -24,22 +24,17 @@ class SchedulerThread(Thread):
             now = time()
             scheduled = ScheduledCache()
             for s in schedules:
-                nxt = s.next_time()
-                # don't schedule if starting too soon (in <1h)
-                # or more than daysInAdvance
-                if (
-                    nxt is None
-                    or nxt < now + 60 * 60
-                    or now + s.days_in_advance * 24 * 60 * 60 < nxt
-                ):
-                    continue
-                if scheduled.is_scheduled(s, nxt):
-                    continue
-                db.add_log(f"Trying to create {s.name} for {s.team}")
-                id = api.schedule_arena(s, nxt, self.api_key)
-                db.insert_created(id, s.id, s.team, nxt)
-                db.add_log(f"Created {s.name}")
-                sleep(10)
+                for nxt in s.next_times():
+                    # don't schedule if starting too soon (in <1h)
+                    if nxt < now + 60 * 60:
+                        continue
+                    if scheduled.is_scheduled(s, nxt):
+                        continue
+                    db.add_log(f"Trying to create {s.name} for {s.team}")
+                    id = api.schedule_arena(s, nxt, self.api_key)
+                    db.insert_created(id, s.id, s.team, nxt)
+                    db.add_log(f"Created {s.name}")
+                    sleep(10)
 
     def run(self) -> None:
         while True:
