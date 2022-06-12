@@ -109,14 +109,16 @@
   <table class="form-table">
     <tr>
       <td>Team:</td>
-      <td
-        ><a href="https://lichess.org/team/{team}" target="_blank">{team}</a
-        ></td
-      >
+      <td>
+        <a href="https://lichess.org/team/{team}" target="_blank">{team}</a>
+      </td>
     </tr>
     <tr>
       <td>Name:</td>
-      <td><input type="text" bind:value={name} required /></td>
+      <td>
+        <input type="text" bind:value={name} required />
+        {isTeamBattle ? 'Team Battle' : 'Arena'}
+      </td>
     </tr>
     <tr>
       <td>Description:<br />(optional)</td>
@@ -172,14 +174,9 @@
     {#if variant === 'standard'}
       <tr>
         <td>FEN (optional):</td>
-        <td
-          ><input
-            type="text"
-            name="position"
-            size="60"
-            bind:value={position}
-          /></td
-        >
+        <td>
+          <input type="text" name="position" size="60" bind:value={position} />
+        </td>
       </tr>
     {/if}
     <tr>
