@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Schedule, Schedules, Arena } from './types';
+  import type { Schedule, Schedules, TeamArena } from './types';
   import {
     API_HOST,
     LICHESS_HOST,
@@ -16,10 +16,11 @@
   } from './utils';
 
   export let token: string;
-  export let gotoCreate: (team: string) => void;
-  export let gotoEdit: (schedule: Schedule) => void;
+  export let gotoCreateSchedule: (team: string) => void;
+  export let gotoEditSchedule: (schedule: Schedule) => void;
+  export let gotoEditArena: (arena: TeamArena, team: string) => void;
   let teams: Schedules = null;
-  let createdArenas: { [team: string]: Arena[] } = {};
+  let createdArenas: { [team: string]: TeamArena[] } = {};
   let loadCreatedArenas = true;
 
   {
@@ -52,7 +53,7 @@
     const arenas = [];
     for (const line of text.split(/\r?\n/g)) {
       if (!line) continue;
-      const arena = JSON.parse(line) as Arena;
+      const arena = JSON.parse(line) as TeamArena;
       if (
         arena.secondsToStart &&
         arena.secondsToStart > 0 &&
@@ -137,6 +138,7 @@
             <td>in {formatUntil(arena.secondsToStart)}</td>
             <td>{arena.nbPlayers} players</td>
             <td>
+              <button on:click={() => gotoEditArena(arena, team)}></button>
               <button on:click={() => handleCancel(team, arena.id)}>
                 Cancel
               </button>
@@ -176,7 +178,7 @@
             <td>{formatDate(schedule.scheduleStart)}</td>
             <td>{formatEndDate(schedule.scheduleEnd)}</td>
             <td>
-              <button type="button" on:click={() => gotoEdit(schedule)}>
+              <button type="button" on:click={() => gotoEditSchedule(schedule)}>
                 Edit
               </button>
             </td>
@@ -190,7 +192,7 @@
       </table>
     {/if}
     <br />
-    <button type="button" on:click={() => gotoCreate(team)}>
+    <button type="button" on:click={() => gotoCreateSchedule(team)}>
       Schedule new tournament
     </button>
     {#if i != teams.length - 1}<hr />{/if}

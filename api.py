@@ -7,13 +7,15 @@ from typing import List, Optional, Set
 
 import requests
 
-from db import Schedule, ScheduleWithId
+from db import Schedule
+from model import ArenaEdit
 
 HOST = "https://lichess.org"  # overridden from config in app.py
 ENDPOINT_TEAMS = "/api/team/of/{}"
 ENDPOINT_TOKEN_TEST = "/api/token/test"
 ENDPOINT_TEAM_ARENAS = "/api/team/{}/arena"
 ENDPOINT_CREATE_ARENA = "/api/tournament"
+ENDPOINT_UPDATE_ARENA = "/api/tournament/{}"
 ENDPOINT_TERMINATE_ARENA = "/api/tournament/{}/terminate"
 ENDPOINT_TEAM_BATTLE = "/api/tournament/team-battle/{}"
 BOOL = ["false", "true"]
@@ -115,13 +117,13 @@ def schedule_arena(s: Schedule, at: int, api_key: str) -> str:
     return id
 
 
-def update_team_battle(arena_id: str, schedule: ScheduleWithId, api_key: str) -> None:
-    teams = schedule.team_battle_teams()
-    leaders = schedule.teamBattleLeaders or 5
+def update_team_battle(
+    arena_id: str, teams: List[str], nbLeaders: Optional[int], api_key: str
+) -> None:
     resp = requests.post(
         HOST + ENDPOINT_TEAM_BATTLE.format(arena_id),
         headers={"Authorization": f"Bearer {api_key}"},
-        data={"teams": ",".join(teams), "nbLeaders": leaders},
+        data={"teams": ",".join(teams), "nbLeaders": nbLeaders or 5},
     )
     resp.raise_for_status()
 
@@ -131,3 +133,35 @@ def terminate_arena(id: str, api_key: str) -> None:
         HOST + ENDPOINT_TERMINATE_ARENA.format(id),
         headers={"Authorization": f"Bearer {api_key}"},
     ).raise_for_status()
+
+
+def update_arena(arena: ArenaEdit, api_key: str) -> Optional[str]:
+    data = {
+        "name": arena.name,
+        "clockTime": arena.clock,
+        "clockIncrement": arena.increment,
+        "minutes": arena.minutes,
+        "variant": arena.variant,
+        "rated": BOOL[arena.rated],
+        "berserkable": BOOL[arena.berserkable],
+        "streakable": BOOL[arena.streakable],
+    }
+    if arena.position:
+        data["position"] = arena.position
+    if arena.description:
+        data["description"] = arena.description
+    if arena.minRating:
+        data["conditions.minRating.rating"] = arena.minRating
+    if arena.maxRating:
+        data["conditions.maxRating.rating"] = arena.maxRating
+    if arena.minGames:
+        data["conditions.nbRatedGames.nb"] = arena.minGames
+
+    resp = requests.post(
+        HOST + ENDPOINT_UPDATE_ARENA.format(arena.id),
+        headers={"Authorization": f"Bearer {api_key}"},
+        data=data,
+    )
+
+    if not resp.ok:
+        return resp.text

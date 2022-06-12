@@ -13,7 +13,8 @@ from werkzeug.exceptions import HTTPException
 
 import api
 from auth import Auth
-from db import Db, ParseError, Schedule, ScheduleWithId
+from db import Db
+from model import ArenaEdit, ParseError, Schedule, ScheduleWithId
 from scheduler import SchedulerThread
 
 OK_RESPONSE = '{"ok":true}'
@@ -96,8 +97,53 @@ def edit() -> str:
         db.update_schedule(schedule)
 
         if schedule.is_team_battle:
+            teams = schedule.team_battle_teams()
+            leaders = schedule.teamBattleLeaders
             for id in db.created_with_schedule(schedule.id):
-                api.update_team_battle(id, schedule, app.config["LICHESS_API_KEY"])
+                api.update_team_battle(
+                    id, teams, leaders, app.config["LICHESS_API_KEY"]
+                )
+
+    return OK_RESPONSE
+
+
+@app.route("/editArena", methods=["POST"])
+def editArena() -> str:
+    try:
+        j = request.json
+        if not j:
+            abort(400)
+        arena = ArenaEdit.from_json(j)
+    except ParseError as e:
+        abort(400, description=str(e))
+
+    auth().assert_for_team(arena.team)
+
+    team = db.team_of_created(arena.id)
+    if team is None or team != arena.team:
+        abort(
+            404,
+            description="This tournament either doesn't exist or wasn't created by the scheduler",
+        )
+
+    err = api.update_arena(arena, app.config["LICHESS_API_KEY"])
+    if err is not None:
+        abort(500, description=f"Failed to edit tournament: {err}")
+
+    if arena.isTeamBattle:
+        try:
+            api.update_team_battle(
+                arena.id,
+                arena.team_battle_teams(),
+                arena.teamBattleLeaders,
+                app.config["LICHESS_API_KEY"],
+            )
+        except Exception as e:
+            app.logger.error(f"Failed to update arena teams: {e}")
+            abort(
+                500,
+                description="Failed to update teams (but other changes were applied successfully)",
+            )
 
     return OK_RESPONSE
 
