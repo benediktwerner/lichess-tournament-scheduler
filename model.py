@@ -135,6 +135,8 @@ class Schedule:
         while nxt <= endTime:
             if not self.scheduleStart or self.scheduleStart <= nxt:
                 times.append(nxt)
+                if len(times) == 2:
+                    break
             new = add_delta(new, delta)
             nxt = timegm(new.timetuple())
 
