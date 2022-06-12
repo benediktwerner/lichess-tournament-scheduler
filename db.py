@@ -231,7 +231,7 @@ class Db:
                     time
                    ) VALUES (?, ?)
                 """,
-                (text, int(time() * 1000)),
+                (text, int(time() * 1_000_000)),
             )
 
     def clean_logs(self) -> None:
