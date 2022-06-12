@@ -46,6 +46,7 @@
   let teamBattleLeaders = schedule?.teamBattleLeaders;
   let isTeamBattle = teamBattleTeams && teamBattleTeams.length > 0;
   let daysInAdvance = schedule?.daysInAdvance ?? 1;
+  let updateCreated = localStorage.getItem('updateCreated') !== 'false';
 
   const handleSave = async () => {
     if (!form) return;
@@ -54,10 +55,12 @@
       return;
     }
 
+    localStorage.setItem('updateCreated', updateCreated + '');
+
     const [hh, mm] = scheduleTime.split(':');
     const time = parseInt(hh) * 60 + parseInt(mm);
 
-    const schedule: Schedule = {
+    const schedule: Schedule & { updateCreated: boolean } = {
       id,
       team,
       name,
@@ -87,6 +90,7 @@
       teamBattleTeams: isTeamBattle ? teamBattleTeams : null,
       teamBattleLeaders: isTeamBattle ? teamBattleLeaders : null,
       daysInAdvance,
+      updateCreated,
     };
 
     const resp = await fetch(API_HOST + (create ? '/create' : '/edit'), {
@@ -324,6 +328,14 @@
             bind:value={teamBattleLeaders}
             required
           />
+        </td>
+      </tr>
+    {/if}
+    {#if !create}
+      <tr>
+        <td>Update already <br /> created tournaments:</td>
+        <td>
+          <input type="checkbox" bind:checked={updateCreated} />
         </td>
       </tr>
     {/if}

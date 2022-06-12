@@ -14,7 +14,7 @@ from werkzeug.exceptions import HTTPException
 import api
 from auth import Auth
 from db import Db
-from model import ArenaEdit, ParseError, Schedule, ScheduleWithId
+from model import ArenaEdit, ParseError, Schedule, ScheduleWithId, get_or_raise
 from scheduler import SchedulerThread
 
 OK_RESPONSE = '{"ok":true}'
@@ -88,6 +88,7 @@ def edit() -> str:
         if not j:
             abort(400)
         schedule = ScheduleWithId.from_json(j)
+        update_created = get_or_raise(j, "updateCreated", bool)
     except ParseError as e:
         abort(400, description=str(e))
 
@@ -96,13 +97,30 @@ def edit() -> str:
     with Db() as db:
         db.update_schedule(schedule)
 
-        if schedule.is_team_battle:
-            teams = schedule.team_battle_teams()
-            leaders = schedule.teamBattleLeaders
-            for id in db.created_with_schedule(schedule.id):
-                api.update_team_battle(
-                    id, teams, leaders, app.config["LICHESS_API_KEY"]
-                )
+        if not update_created:
+            return OK_RESPONSE
+
+        teams = schedule.team_battle_teams()
+        leaders = schedule.teamBattleLeaders
+
+        for id in db.created_with_schedule(schedule.id):
+            err = api.update_arena(
+                ArenaEdit.from_schedule(schedule, id), app.config["LICHESS_API_KEY"]
+            )
+            if err is not None:
+                abort(500, f"Failed to update tournament {id}: {err}")
+
+            if schedule.is_team_battle:
+                try:
+                    api.update_team_battle(
+                        id, teams, leaders, app.config["LICHESS_API_KEY"]
+                    )
+                except Exception as e:
+                    app.logger.error(f"Failed to update arena teams: {e}")
+                    abort(
+                        500,
+                        description=f"Failed to update teams for {id}",
+                    )
 
     return OK_RESPONSE
 

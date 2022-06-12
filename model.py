@@ -203,6 +203,29 @@ class ArenaEdit:
         return extract_team_battle_teams(self.team, self.teamBattleTeams)
 
     @staticmethod
+    def from_schedule(s: Schedule, id: str) -> ArenaEdit:
+        return ArenaEdit(
+            id,
+            s.name,
+            s.team,
+            s.clock,
+            s.increment,
+            s.minutes,
+            s.variant,
+            s.rated,
+            s.position,
+            s.berserkable,
+            s.streakable,
+            s.description,
+            s.minRating,
+            s.maxRating,
+            s.minGames,
+            s.is_team_battle,
+            s.teamBattleTeams,
+            s.teamBattleLeaders
+        )
+
+    @staticmethod
     def from_json(j: dict) -> ArenaEdit:
         return ArenaEdit(
             get_or_raise(j, "id", str),
