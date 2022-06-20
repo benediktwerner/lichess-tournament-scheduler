@@ -24,14 +24,19 @@ app = Flask(__name__)
 app.config.from_pyfile("config.py")
 app.logger.setLevel(logging.INFO)
 
-CORS(app)
-
 try:
+    CORS(app)
     api.HOST = app.config["HOST"]
-    with Db() as db:
-        db.create_tables(app)
+
+    # don't leak db into global scope
+    def create_tables() -> None:
+        with Db() as db:
+            db.create_tables(app)
+    create_tables()
+
     auth = Auth(app)
     SchedulerThread(app.config["LICHESS_API_KEY"], app.logger).start()
+
 except Exception as e:
     app.logger.error(f"Exception during startup: {e}")
     raise e
