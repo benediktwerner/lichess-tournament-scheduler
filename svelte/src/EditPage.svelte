@@ -46,7 +46,7 @@
   let teamBattleLeaders = schedule?.teamBattleLeaders;
   let isTeamBattle = teamBattleTeams && teamBattleTeams.length > 0;
   let daysInAdvance = schedule?.daysInAdvance ?? 1;
-  let updateCreated = localStorage.getItem('updateCreated') !== 'false';
+  let updateCreated = false;
 
   const handleSave = async () => {
     if (!form) return;
@@ -54,8 +54,6 @@
       form.reportValidity();
       return;
     }
-
-    localStorage.setItem('updateCreated', updateCreated + '');
 
     const [hh, mm] = scheduleTime.split(':');
     const time = parseInt(hh) * 60 + parseInt(mm);
