@@ -18,7 +18,7 @@
   export let token: string;
   export let gotoCreateSchedule: (team: string) => void;
   export let gotoEditSchedule: (schedule: Schedule) => void;
-  export let gotoEditArena: (arena: TeamArena, team: string) => void;
+  export let gotoEditArena: (id: string, team: string) => void;
   let teams: Schedules = null;
   let createdArenas: { [team: string]: TeamArena[] } = {};
 
@@ -122,7 +122,7 @@
             <td>in {formatUntil(arena.secondsToStart)}</td>
             <td>{arena.nbPlayers} players</td>
             <td>
-              <button on:click={() => gotoEditArena(arena, team)}>Edit</button>
+              <button on:click={() => gotoEditArena(arena.id, team)}>Edit</button>
               <button on:click={() => handleCancel(team, arena.id)}>
                 Cancel
               </button>
