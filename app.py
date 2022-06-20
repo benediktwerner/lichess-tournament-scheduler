@@ -6,6 +6,7 @@ import json
 import logging
 from typing import Any
 from datetime import datetime
+from time import time
 
 from flask import Flask, abort, jsonify, request
 from flask_cors import CORS
@@ -102,10 +103,15 @@ def edit() -> str:
 
         teams = schedule.team_battle_teams()
         leaders = schedule.teamBattleLeaders
+        upcoming = db.created_upcoming_with_schedule(schedule.id)
+        prev = db.previous_created(schedule.id, int(time()))
 
-        for id in db.created_upcoming_with_schedule(schedule.id):
+        for i, id in enumerate(upcoming):
             err = api.update_arena(
-                ArenaEdit.from_schedule(schedule, id), app.config["LICHESS_API_KEY"]
+                ArenaEdit.from_schedule(schedule, id),
+                upcoming[i - 1] if i > 0 else prev,
+                upcoming[i + 1] if i + 1 < len(upcoming) else None,
+                app.config["LICHESS_API_KEY"],
             )
             if err is not None:
                 abort(500, f"Failed to update tournament {id}: {err}")

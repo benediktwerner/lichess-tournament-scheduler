@@ -95,7 +95,7 @@ class Db:
 
     def created_upcoming_with_schedule(self, schedule_id: int) -> List[str]:
         rows = self._query(
-            "SELECT id FROM createdArenas WHERE scheduleId = ? and time > ?",
+            "SELECT id FROM createdArenas WHERE scheduleId = ? and time > ? ORDER BY time ASC",
             (schedule_id, int(time())),
         )
         return [row["id"] for row in rows]

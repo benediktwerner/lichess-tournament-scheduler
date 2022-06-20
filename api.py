@@ -12,6 +12,7 @@ from db import Schedule
 from model import ArenaEdit
 
 HOST = "https://lichess.org"  # overridden from config in app.py
+ARENA_URL = "/tournament/{}"
 ENDPOINT_TEAMS = "/api/team/of/{}"
 ENDPOINT_TOKEN_TEST = "/api/token/test"
 ENDPOINT_TEAM_ARENAS = "/api/team/{}/arena"
@@ -90,7 +91,7 @@ def schedule_arena(s: Schedule, at: int, api_key: str, prev: Optional[str]) -> s
     if s.description:
         desc = s.description
         if prev:
-            desc.replace("](prev)", prev)
+            desc = desc.replace("](prev)", f"]({HOST + ARENA_URL.format(prev)})")
         else:
             desc = re.sub(r"\[.*?\]\(prev\)", "", desc)
         desc = desc.replace("](next)", "](soon)")
@@ -143,7 +144,9 @@ def terminate_arena(id: str, api_key: str) -> None:
     ).raise_for_status()
 
 
-def update_arena(arena: ArenaEdit, api_key: str) -> Optional[str]:
+def update_arena(
+    arena: ArenaEdit, prev: Optional[str], nxt: Optional[str], api_key: str
+) -> Optional[str]:
     data = {
         "name": arena.name,
         "clockTime": arena.clock,
@@ -157,7 +160,19 @@ def update_arena(arena: ArenaEdit, api_key: str) -> Optional[str]:
     if arena.position:
         data["position"] = arena.position
     if arena.description:
-        data["description"] = arena.description
+        desc = arena.description
+        if prev:
+            desc = desc.replace("](prev)", f"]({HOST + ARENA_URL.format(prev)})")
+        else:
+            desc = re.sub(r"\[.*?\]\(prev\)", "", desc)
+        if nxt:
+            nxt_url = HOST + ARENA_URL.format(nxt)
+            desc = desc.replace("](soon)", f"]({nxt_url})").replace(
+                "](next)", f"]({nxt_url})"
+            )
+        else:
+            desc = desc.replace("](next)", "](soon)")
+        data["description"] = desc
     if arena.minRating:
         data["conditions.minRating.rating"] = arena.minRating
     if arena.maxRating:
@@ -183,13 +198,15 @@ def update_link_to_next_arena(id: str, nxt: str, api_key: str) -> None:
     if not desc or ("](soon)" not in desc and "](next)" not in desc):
         return
 
+    nxt_url = HOST + ARENA_URL.format(nxt)
+
     data = {
         "clockTime": arena["clock"]["limit"] / 60,
         "clockIncrement": arena["clock"]["increment"],
         "minutes": arena["minutes"],
         "variant": arena["variant"],
-        "description": desc.replace("](soon)", f"]({nxt})").replace(
-            "](next)", f"]({nxt})"
+        "description": desc.replace("](soon)", f"]({nxt_url})").replace(
+            "](next)", f"]({nxt_url})"
         ),
     }
     if "minGames" in arena:
