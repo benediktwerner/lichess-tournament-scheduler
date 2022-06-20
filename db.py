@@ -24,6 +24,7 @@ class Db:
             with self.db as trans:
                 with app.open_resource("schema.sql", mode="r") as f:
                     trans.executescript(f.read())
+                trans.execute(f"PRAGMA user_version = {VERSION}")
             return
 
         version = self._version()
