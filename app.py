@@ -26,11 +26,15 @@ app.logger.setLevel(logging.INFO)
 
 CORS(app)
 
-api.HOST = app.config["HOST"]
-with Db() as db:
-    db.create_tables(app)
-auth = Auth(app)
-SchedulerThread(app.config["LICHESS_API_KEY"], app.logger).start()
+try:
+    api.HOST = app.config["HOST"]
+    with Db() as db:
+        db.create_tables(app)
+    auth = Auth(app)
+    SchedulerThread(app.config["LICHESS_API_KEY"], app.logger).start()
+except Exception as e:
+    app.logger.error(f"Exception during startup: {e}")
+    raise e
 
 
 @app.errorhandler(HTTPException)
