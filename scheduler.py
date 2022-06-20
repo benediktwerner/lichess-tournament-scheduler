@@ -49,7 +49,10 @@ class SchedulerThread(Thread):
                 self.logger.error(f"Error during tournament creation: {e}")
                 if hasattr(e, "response"):
                     try:
-                        self.logger.error(f"Response: {cast(Any, e).response.text}")
+                        response = cast(Any, e).response
+                        self.logger.error(f"Response: {response.status_code} {response.text}")
+                        with Db() as db:
+                            db.add_log(f"Response: {response.status_code}")
                     except Exception:
                         pass
             sleep(60 * 60)
