@@ -3,11 +3,12 @@ from __future__ import annotations
 from logging import Logger
 from threading import Thread
 from time import sleep, time
-from typing import Any, Dict, Set, cast
+from typing import Any, Dict, List, Set, Tuple, cast
 
 import api
 from api import Arena
-from db import Db, Schedule
+from db import Db
+from model import Schedule, ScheduleWithId
 
 
 class SchedulerThread(Thread):
@@ -18,12 +19,11 @@ class SchedulerThread(Thread):
 
     def schedule_next_arenas(self) -> None:
         with Db() as db:
-            db.delete_past_created()
             schedules = db.schedules()
 
             now = time()
             scheduled = ScheduledCache()
-            to_schedule = []
+            to_schedule: List[Tuple[int, ScheduleWithId]] = []
             for s in schedules:
                 for nxt in s.next_times():
                     # don't schedule if starting too soon (in <1h)
@@ -38,10 +38,15 @@ class SchedulerThread(Thread):
 
             for nxt, s in to_schedule:
                 db.add_log(f"Trying to create {s.name} for {s.team}")
-                id = api.schedule_arena(s, nxt, self.api_key)
+                prev = db.previous_created(s.id, nxt)
+                id = api.schedule_arena(s, nxt, self.api_key, prev)
                 db.insert_created(id, s.id, s.team, nxt)
                 db.add_log(f"Created {s.name}")
                 sleep(10)
+                if prev and s.description and "](next)" in s.description:
+                    db.add_log(f"Adding link to: {prev}")
+                    api.update_link_to_next_arena(prev, id, self.api_key)
+                    sleep(10)
 
     def run(self) -> None:
         while True:
@@ -57,7 +62,9 @@ class SchedulerThread(Thread):
                 if hasattr(e, "response"):
                     try:
                         response = cast(Any, e).response
-                        self.logger.error(f"Response: {response.status_code} {response.text}")
+                        self.logger.error(
+                            f"Response: {response.status_code} {response.text}"
+                        )
                         with Db() as db:
                             db.add_log(f"Response: {response.status_code}")
                     except Exception:

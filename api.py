@@ -4,6 +4,7 @@ import json
 from dataclasses import dataclass
 from time import time
 from typing import List, Optional, Set
+import re
 
 import requests
 
@@ -15,6 +16,7 @@ ENDPOINT_TEAMS = "/api/team/of/{}"
 ENDPOINT_TOKEN_TEST = "/api/token/test"
 ENDPOINT_TEAM_ARENAS = "/api/team/{}/arena"
 ENDPOINT_CREATE_ARENA = "/api/tournament"
+ENDPOINT_GET_ARENA = "/api/tournament/{}"
 ENDPOINT_UPDATE_ARENA = "/api/tournament/{}"
 ENDPOINT_TERMINATE_ARENA = "/api/tournament/{}/terminate"
 ENDPOINT_TEAM_BATTLE = "/api/tournament/team-battle/{}"
@@ -67,7 +69,7 @@ def future_team_arenas(teamId: str) -> Set[Arena]:
     return {a for a in arenas if a.time > now}
 
 
-def schedule_arena(s: Schedule, at: int, api_key: str) -> str:
+def schedule_arena(s: Schedule, at: int, api_key: str, prev: Optional[str]) -> str:
     data = {
         "name": s.name,
         "clockTime": s.clock,
@@ -86,7 +88,13 @@ def schedule_arena(s: Schedule, at: int, api_key: str) -> str:
     if s.position:
         data["position"] = s.position
     if s.description:
-        data["description"] = s.description
+        desc = s.description
+        if prev:
+            desc.replace("](prev)", prev)
+        else:
+            desc = re.sub(r"\[.*?\]\(prev\)", "", desc)
+        desc = desc.replace("](next)", "](soon)")
+        data["description"] = desc
     if s.minRating:
         data["conditions.minRating.rating"] = s.minRating
     if s.maxRating:
@@ -165,3 +173,34 @@ def update_arena(arena: ArenaEdit, api_key: str) -> Optional[str]:
 
     if not resp.ok:
         return resp.text
+
+
+def update_link_to_next_arena(id: str, nxt: str, api_key: str) -> None:
+    resp = requests.get(HOST + ENDPOINT_GET_ARENA.format(id))
+    resp.raise_for_status()
+    arena = resp.json()
+    desc = arena.get("description")
+    if not desc or ("](soon)" not in desc and "](next)" not in desc):
+        return
+
+    data = {
+        "clockTime": arena["clock"]["limit"] / 60,
+        "clockIncrement": arena["clock"]["increment"],
+        "minutes": arena["minutes"],
+        "variant": arena["variant"],
+        "description": desc.replace("](soon)", f"]({nxt})").replace(
+            "](next)", f"]({nxt})"
+        ),
+    }
+    if "minGames" in arena:
+        data["conditions.nbRatedGames.nb"] = arena["minRatedGames"]["nb"]
+    if "minRating" in arena:
+        data["conditions.minRating.rating"] = arena["minRating"]["rating"]
+    if "maxRating" in arena:
+        data["conditions.maxRating.rating"] = arena["maxRating"]["rating"]
+
+    requests.post(
+        HOST + ENDPOINT_UPDATE_ARENA.format(id),
+        headers={"Authorization": f"Bearer {api_key}"},
+        data=data,
+    ).raise_for_status()

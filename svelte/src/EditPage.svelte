@@ -126,7 +126,15 @@
     </tr>
     <tr>
       <td>Description:<br />(optional)</td>
-      <td><textarea cols="30" rows="5" bind:value={description} /></td>
+      <td>
+        <textarea cols="30" rows="5" bind:value={description} />
+        <br />
+        <small>
+          Use <code>prev</code> and <code>next</code> as the "URL" in a markdown
+          link to automatically link to the previous/next tournament of this
+          series: <code>[Next tournament](next)</code>
+        </small>
+      </td>
     </tr>
     <tr>
       <td>Initial clock:</td>

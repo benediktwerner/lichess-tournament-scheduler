@@ -56,11 +56,11 @@ def schedules() -> Any:
         return jsonify([(team, by_team[team]) for team in teams])
 
 
-@app.route("/createdIds")
-def createdIds() -> Any:
+@app.route("/createdUpcomingIds")
+def createdUpcomingIds() -> Any:
     auth()
     with Db() as db:
-        return jsonify(db.created_ids())
+        return jsonify(db.created_upcoming_ids())
 
 
 @app.route("/create", methods=["POST"])
@@ -103,7 +103,7 @@ def edit() -> str:
         teams = schedule.team_battle_teams()
         leaders = schedule.teamBattleLeaders
 
-        for id in db.created_with_schedule(schedule.id):
+        for id in db.created_upcoming_with_schedule(schedule.id):
             err = api.update_arena(
                 ArenaEdit.from_schedule(schedule, id), app.config["LICHESS_API_KEY"]
             )

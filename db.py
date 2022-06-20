@@ -83,26 +83,29 @@ class Db:
         with self.db as conn:
             conn.execute("DELETE FROM createdArenas WHERE id = ?", (id,))
 
-    def delete_past_created(self) -> None:
-        with self.db as conn:
-            conn.execute("DELETE FROM createdArenas WHERE time < ?", (int(time()),))
-
     def team_of_created(self, id: str) -> Optional[str]:
         a = self._query_one("SELECT team FROM createdArenas WHERE id = ?", (id,))
         if a:
             return str(a["team"])
         return None
 
-    def created_ids(self) -> List[str]:
-        rows = self._query("SELECT id FROM createdArenas", ())
+    def created_upcoming_ids(self) -> List[str]:
+        rows = self._query("SELECT id FROM createdArenas WHERE time > ?", (int(time()),))
         return [row["id"] for row in rows]
 
-    def created_with_schedule(self, schedule_id: int) -> List[str]:
+    def created_upcoming_with_schedule(self, schedule_id: int) -> List[str]:
         rows = self._query(
             "SELECT id FROM createdArenas WHERE scheduleId = ? and time > ?",
             (schedule_id, int(time())),
         )
         return [row["id"] for row in rows]
+
+    def previous_created(self, schedule_id: int, timestamp: int) -> Optional[str]:
+        result = self._query_one(
+            "SELECT id FROM createdArenas WHERE scheduleId = ? and time < ? ORDER BY time DESC LIMIT 1",
+            (schedule_id, timestamp),
+        )
+        return result["id"] if result else None
 
     def schedules(self) -> List[ScheduleWithId]:
         return [
@@ -238,7 +241,7 @@ class Db:
         with self.db as conn:
             conn.execute(
                 "DELETE FROM logs WHERE time < ?",
-                (int(time() * 1_000_000) - 7 * 24 * 60 * 60 * 1_000_000,),
+                (int(time() * 1_000_000) - 31 * 24 * 60 * 60 * 1_000_000,),
             )
 
     def logs(self) -> List[Tuple[int, str]]:

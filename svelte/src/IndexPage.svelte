@@ -23,7 +23,7 @@
   let createdArenas: { [team: string]: TeamArena[] } = {};
 
   const createdIdsPromise = (async () => {
-    const resp = await fetch(API_HOST + '/createdIds', {
+    const resp = await fetch(API_HOST + '/createdUpcomingIds', {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (resp.ok) {
