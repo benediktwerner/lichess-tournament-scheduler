@@ -114,7 +114,7 @@
       <table class="overview-table">
         {#each createdArenas[team] as arena}
           <tr>
-            <td>{arena.fullName}</td>
+            <td><a href="https://lichess.org/tournament/{arena.id}" target="_blank">{arena.fullName}</a></td>
             <td>{arena.variant.name}</td>
             <td>{arena.clock.limit / 60}+{arena.clock.increment}</td>
             <td>{formatDuration(arena.minutes)}</td>
