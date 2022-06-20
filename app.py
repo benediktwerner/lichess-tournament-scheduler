@@ -152,14 +152,18 @@ def editArena() -> str:
 
     auth().assert_for_team(arena.team)
 
-    team = db.team_of_created(arena.id)
-    if team is None or team != arena.team:
-        abort(
-            404,
-            description="This tournament either doesn't exist or wasn't created by the scheduler",
-        )
+    with Db() as db:
+        team = db.team_of_created(arena.id)
 
-    err = api.update_arena(arena, app.config["LICHESS_API_KEY"])
+        if team is None or team != arena.team:
+            abort(
+                404,
+                description="This tournament either doesn't exist or wasn't created by the scheduler",
+            )
+
+        prev, nxt = db.prev_nxt_of_created(arena.id)
+
+    err = api.update_arena(arena, prev, nxt, app.config["LICHESS_API_KEY"])
     if err is not None:
         abort(500, description=f"Failed to edit tournament: {err}")
 

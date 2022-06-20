@@ -91,7 +91,9 @@ class Db:
         return None
 
     def created_upcoming_ids(self) -> List[str]:
-        rows = self._query("SELECT id FROM createdArenas WHERE time > ?", (int(time()),))
+        rows = self._query(
+            "SELECT id FROM createdArenas WHERE time > ?", (int(time()),)
+        )
         return [row["id"] for row in rows]
 
     def created_upcoming_with_schedule(self, schedule_id: int) -> List[str]:
@@ -107,6 +109,23 @@ class Db:
             (schedule_id, timestamp),
         )
         return result["id"] if result else None
+
+    def prev_nxt_of_created(self, id: str) -> Tuple[Optional[str], Optional[str]]:
+        result = self._query_one(
+            "SELECT scheduleId, time FROM createdArenas WHERE id = ?",
+            (id,),
+        )
+        if not result:
+            return (None, None)
+        prev = self._query_one(
+            "SELECT id FROM createdArenas WHERE scheduleId = ? and time < ? ORDER BY time DESC LIMIT 1",
+            (result["scheduleId"], result["time"]),
+        )
+        nxt = self._query_one(
+            "SELECT id FROM createdArenas WHERE scheduleId = ? and time > ? ORDER BY time DESC LIMIT 1",
+            (result["scheduleId"], result["time"]),
+        )
+        return (prev["id"] if prev else None, nxt["id"] if nxt else None)
 
     def schedules(self) -> List[ScheduleWithId]:
         return [
