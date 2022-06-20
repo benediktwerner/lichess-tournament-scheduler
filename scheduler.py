@@ -23,6 +23,7 @@ class SchedulerThread(Thread):
 
             now = time()
             scheduled = ScheduledCache()
+            to_schedule = []
             for s in schedules:
                 for nxt in s.next_times():
                     # don't schedule if starting too soon (in <1h)
@@ -30,11 +31,17 @@ class SchedulerThread(Thread):
                         continue
                     if scheduled.is_scheduled(s, nxt):
                         continue
-                    db.add_log(f"Trying to create {s.name} for {s.team}")
-                    id = api.schedule_arena(s, nxt, self.api_key)
-                    db.insert_created(id, s.id, s.team, nxt)
-                    db.add_log(f"Created {s.name}")
-                    sleep(10)
+                    to_schedule.append((nxt, s))
+
+            # Create soonest tournaments first in case of rate-limiting
+            to_schedule.sort(key=lambda x: x[0])
+
+            for nxt, s in to_schedule:
+                db.add_log(f"Trying to create {s.name} for {s.team}")
+                id = api.schedule_arena(s, nxt, self.api_key)
+                db.insert_created(id, s.id, s.team, nxt)
+                db.add_log(f"Created {s.name}")
+                sleep(10)
 
     def run(self) -> None:
         while True:
