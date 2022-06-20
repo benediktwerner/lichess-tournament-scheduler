@@ -21,18 +21,6 @@
   export let gotoEditArena: (arena: TeamArena, team: string) => void;
   let teams: Schedules = null;
   let createdArenas: { [team: string]: TeamArena[] } = {};
-  let loadCreatedArenas = true;
-
-  {
-    const created = localStorage.getItem('createdArenas');
-    if (created) {
-      const createdJson = JSON.parse(created);
-      if (createdJson.updated > +new Date() - 2 * 60 * 1000) {
-        createdArenas = createdJson.createdArenas;
-        loadCreatedArenas = false;
-      }
-    }
-  }
 
   const createdIdsPromise = (async () => {
     const resp = await fetch(API_HOST + '/createdIds', {
@@ -44,9 +32,7 @@
     } else return new Set<string>();
   })();
 
-  const loadCreatedForTeam = async (team: string, delay?: number) => {
-    if (delay) await sleep(delay);
-
+  const loadCreatedForTeam = async (team: string) => {
     const resp = await fetch(LICHESS_HOST + `/api/team/${team}/arena`);
     const text = await resp.text();
     const createdIds = await createdIdsPromise;
@@ -64,10 +50,6 @@
       }
     }
     createdArenas[team] = arenas;
-    localStorage.setItem(
-      'createdArenas',
-      JSON.stringify({ updated: +new Date(), createdArenas })
-    );
   };
 
   const load = async (reloadCreated: boolean) => {
@@ -77,11 +59,13 @@
     if (resp.ok) {
       teams = await resp.json();
       if (reloadCreated) {
-        let todo = [];
-        for (const [i, [team, _]] of teams.entries()) {
-          todo.push(loadCreatedForTeam(team, i * 1000));
+        let promise = Promise.resolve();
+        for (const [team, _] of teams) {
+          promise = promise
+            .then(() => loadCreatedForTeam(team))
+            .then(() => sleep(250));
         }
-        await Promise.all(todo);
+        await promise;
       }
     } else {
       alert(`Error: ${await resp.text()}`);
@@ -115,7 +99,7 @@
     return `Every ${period} ${unit}`;
   };
 
-  load(loadCreatedArenas);
+  load(true);
 </script>
 
 {#if !teams}
