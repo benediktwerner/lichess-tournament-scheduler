@@ -21,15 +21,13 @@
   let position = arena.position?.fen ?? null;
   let berserkable = arena.berserkable ?? false;
   let streakable = !arena.noStreak;
-  // TODO: conditions
-  let minRating = arena?.minRating;
-  let maxRating = arena?.maxRating;
-  let minGames = arena?.minGames;
+  let minRating = arena?.minRating.rating;
+  let maxRating = arena?.maxRating.rating;
+  let minGames = arena?.minRatedGames.nb;
   let minRatingEnabled = !!minRating;
   let maxRatingEnabled = !!maxRating;
   let minGamesEnabled = !!minGames;
   let teamBattleTeams = arena.teamBattle?.teams.join('\n') ?? '';
-  // TODO: nbLeaders
   let teamBattleLeaders = arena.teamBattle?.nbLeaders;
 
   const handleSave = async () => {

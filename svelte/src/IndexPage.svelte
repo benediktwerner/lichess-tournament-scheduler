@@ -122,7 +122,7 @@
             <td>in {formatUntil(arena.secondsToStart)}</td>
             <td>{arena.nbPlayers} players</td>
             <td>
-              <button on:click={() => gotoEditArena(arena, team)}></button>
+              <button on:click={() => gotoEditArena(arena, team)}>Edit</button>
               <button on:click={() => handleCancel(team, arena.id)}>
                 Cancel
               </button>

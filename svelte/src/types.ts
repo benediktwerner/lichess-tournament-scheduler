@@ -44,7 +44,20 @@ interface ArenaBase {
   nbPlayers: number;
   teamBattle?: {
     teams: string[];
+    nbLeaders: number;
   };
+  minRating?: {
+    perf: string,
+    rating: number
+  },
+  maxRating?: {
+    perf: string,
+    rating: number
+  },
+  minRatedGames: {
+    perf?: string,
+    nb: number
+  },
 }
 
 export interface TeamArena extends ArenaBase {
