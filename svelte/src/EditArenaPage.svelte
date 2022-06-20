@@ -58,17 +58,20 @@
       teamBattleLeaders: isTeamBattle ? teamBattleLeaders : null,
     };
 
-    const resp = await fetch(API_HOST + '/editArena', {
-      method: 'POST',
-      body: JSON.stringify(newArena),
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (resp.ok) gotoIndex();
-    else alert(`Error: ${await resp.text()}`);
+    try {
+      const resp = await fetch(API_HOST + '/editArena', {
+        method: 'POST',
+        body: JSON.stringify(newArena),
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (resp.ok) gotoIndex();
+      else alert(`Error: ${await resp.text()}`);
+    } catch (e) {
+      alert(`Error: ${e}`);
+    }
   };
 </script>
 

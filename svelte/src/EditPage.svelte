@@ -91,17 +91,20 @@
       updateCreated,
     };
 
-    const resp = await fetch(API_HOST + (create ? '/create' : '/edit'), {
-      method: 'POST',
-      body: JSON.stringify(schedule),
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (resp.ok) gotoIndex();
-    else alert(`Error: ${await resp.text()}`);
+    try {
+      const resp = await fetch(API_HOST + (create ? '/create' : '/edit'), {
+        method: 'POST',
+        body: JSON.stringify(schedule),
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (resp.ok) gotoIndex();
+      else alert(`Error: ${await resp.text()}`);
+    } catch (e) {
+      alert(`Error: ${e}`);
+    }
   };
 </script>
 
