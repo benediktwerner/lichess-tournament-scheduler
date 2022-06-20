@@ -21,9 +21,9 @@
   let position = arena.position?.fen ?? null;
   let berserkable = arena.berserkable ?? false;
   let streakable = !arena.noStreak;
-  let minRating = arena?.minRating.rating;
-  let maxRating = arena?.maxRating.rating;
-  let minGames = arena?.minRatedGames.nb;
+  let minRating = arena?.minRating?.rating;
+  let maxRating = arena?.maxRating?.rating;
+  let minGames = arena?.minRatedGames?.nb;
   let minRatingEnabled = !!minRating;
   let maxRatingEnabled = !!maxRating;
   let minGamesEnabled = !!minGames;
