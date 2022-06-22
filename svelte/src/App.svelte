@@ -45,19 +45,19 @@
 
   const init = async () => {
     try {
+      const resp = await fetch(API_HOST + '/version');
+      const ver = parseInt(await resp.text(), 10);
+      if (ver > API_VERSION) {
+        error =
+          'The frontend is out-of-date, probably due to caching. Please do a hard-reload using Ctrl+F5 or Cmd+F5 or Ctrl+Shift+R or Cmd+Shift+R';
+      } else outdated = false;
+
       const hasAuthCode = await oauth.isReturningFromAuthServer();
       if (hasAuthCode) {
         accessContext = await oauth.getAccessToken();
         localStorage.setItem('token', JSON.stringify(accessContext));
         history.pushState(null, '', baseUrl());
       }
-
-      const resp = await fetch(API_HOST + '/version');
-      const ver = parseInt(await resp.text(), 10);
-      if (ver > API_VERSION)
-        alert(
-          'The frontend is out-of-date, probably due to caching. Please do a hard-reload using Ctrl+F5 or Cmd+F5 or Ctrl+Shift+R or Cmd+Shift+R'
-        );
     } catch (err) {
       error = err;
     }
@@ -65,16 +65,19 @@
 
   let error = null;
   let accessContext = loadAccessContext();
+  let outdated = true;
   init();
 </script>
 
 <h1>Lichess Tournament Scheduler</h1>
 
-{#if accessContext?.token}
-  <button class="logout" type="button" on:click={handleLogout}>Logout</button>
-  <Router token={accessContext.token.value} />
-{:else}
-  <button type="button" on:click={handleLogin}>Login with Lichess</button>
+{#if !outdated}
+  {#if accessContext?.token}
+    <button class="logout" type="button" on:click={handleLogout}>Logout</button>
+    <Router token={accessContext.token.value} />
+  {:else}
+    <button type="button" on:click={handleLogin}>Login with Lichess</button>
+  {/if}
 {/if}
 
 {#if error}
