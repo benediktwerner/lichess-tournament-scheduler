@@ -90,11 +90,11 @@ class Db:
             return str(a["team"])
         return None
 
-    def created_upcoming_ids(self) -> List[str]:
+    def created_upcoming(self) -> List[Tuple[str, str]]:
         rows = self._query(
-            "SELECT id FROM createdArenas WHERE time > ?", (int(time()),)
+            "SELECT id, team FROM createdArenas WHERE time > ?", (int(time()),)
         )
-        return [row["id"] for row in rows]
+        return [(row["id"], row["team"]) for row in rows]
 
     def created_upcoming_with_schedule(self, schedule_id: int) -> List[str]:
         rows = self._query(

@@ -22,20 +22,44 @@
   let teams: Schedules = null;
   let createdArenas: { [team: string]: TeamArena[] } = {};
 
-  const createdIdsPromise = (async () => {
+  {
+    const arenas = localStorage.getItem('cachedCreatedArenas');
+    if (arenas) createdArenas = JSON.parse(arenas);
+  }
+
+  const createdIdsPromise = (async (): Promise<{
+    [team: string]: string[];
+  }> => {
     const resp = await fetch(API_HOST + '/createdUpcomingIds', {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (resp.ok) {
-      const json = await resp.json();
-      return new Set(json as string[]);
-    } else return new Set<string>();
+      return await resp.json();
+    } else return {};
   })();
 
   const loadCreatedForTeam = async (team: string) => {
+    const createdIds = (await createdIdsPromise)[team];
+
+    if (!createdIds) return;
+    if (
+      createdArenas[team] &&
+      createdIds.every((id) =>
+        createdArenas[team].some((arena) => arena.id === id)
+      )
+    ) {
+      createdArenas[team] = createdArenas[team].filter((arena) =>
+        createdIds.includes(arena.id)
+      );
+      localStorage.setItem(
+        'cachedCreatedArenas',
+        JSON.stringify(createdArenas)
+      );
+      return;
+    }
+
     const resp = await fetch(LICHESS_HOST + `/api/team/${team}/arena`);
     const text = await resp.text();
-    const createdIds = await createdIdsPromise;
     const arenas = [];
     for (const line of text.split(/\r?\n/g)) {
       if (!line) continue;
@@ -44,12 +68,13 @@
         arena.secondsToStart &&
         arena.secondsToStart > 0 &&
         arena.system === 'arena' &&
-        createdIds.has(arena.id)
+        createdIds.includes(arena.id)
       ) {
         arenas.push(arena);
       }
     }
     createdArenas[team] = arenas;
+    localStorage.setItem('cachedCreatedArenas', JSON.stringify(createdArenas));
   };
 
   const load = async (reloadCreated: boolean) => {
@@ -114,7 +139,14 @@
       <table class="overview-table">
         {#each createdArenas[team] as arena}
           <tr>
-            <td><a href="https://lichess.org/tournament/{arena.id}" target="_blank">{arena.fullName}</a></td>
+            <td>
+              <a
+                href="https://lichess.org/tournament/{arena.id}"
+                target="_blank"
+              >
+                {arena.fullName}
+              </a>
+            </td>
             <td>{arena.variant.name}</td>
             <td>{arena.clock.limit / 60}+{arena.clock.increment}</td>
             <td>{formatDuration(arena.minutes)}</td>
@@ -122,7 +154,9 @@
             <td>in {formatUntil(arena.secondsToStart)}</td>
             <td>{arena.nbPlayers} players</td>
             <td>
-              <button on:click={() => gotoEditArena(arena.id, team)}>Edit</button>
+              <button on:click={() => gotoEditArena(arena.id, team)}>
+                Edit
+              </button>
               <button on:click={() => handleCancel(team, arena.id)}>
                 Cancel
               </button>

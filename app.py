@@ -7,6 +7,7 @@ import logging
 from typing import Any
 from datetime import datetime
 from time import time
+from collections import defaultdict
 
 from flask import Flask, abort, jsonify, request
 from flask_cors import CORS
@@ -65,7 +66,7 @@ def version() -> str:
 def schedules() -> Any:
     user = auth()
     with Db() as db:
-        by_team = {team: [] for team in app.config["TEAMS_WHITELIST"]}
+        by_team = defaultdict(list)
         for s in db.schedules():
             by_team[s.team].append(s)
         teams = app.config["TEAMS_WHITELIST"] if user.is_admin else user.teams
@@ -75,8 +76,11 @@ def schedules() -> Any:
 @app.route("/createdUpcomingIds")
 def createdUpcomingIds() -> Any:
     auth()
+    by_team = defaultdict(list)
     with Db() as db:
-        return jsonify(db.created_upcoming_ids())
+        for id, team in db.created_upcoming():
+            by_team[team].append(id)
+    return jsonify(by_team)
 
 
 @app.route("/create", methods=["POST"])
