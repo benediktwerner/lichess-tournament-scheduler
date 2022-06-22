@@ -279,7 +279,6 @@ def extract_team_battle_teams(team: str, ts: Optional[str]) -> List[str]:
     if not ts:
         return []
     teams = set(line.strip().split()[0] for line in ts.splitlines() if line.strip())
-    teams.add(team)
     return [t for t in teams if re.match(r"^[\w-]{2,}$", t)]
 
 
