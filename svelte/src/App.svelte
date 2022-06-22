@@ -1,6 +1,6 @@
 <script lang="ts">
   import { OAuth2AuthCodePKCE } from '@bity/oauth2-auth-code-pkce';
-  import { LICHESS_HOST } from './config';
+  import { API_HOST, API_VERSION, LICHESS_HOST } from './config';
   import Router from './Router.svelte';
 
   const baseUrl = () => {
@@ -51,6 +51,13 @@
         localStorage.setItem('token', JSON.stringify(accessContext));
         history.pushState(null, '', baseUrl());
       }
+
+      const resp = await fetch(API_HOST + '/version');
+      const ver = parseInt(await resp.text(), 10);
+      if (ver > API_VERSION)
+        alert(
+          'The frontend is out-of-date, probably due to caching. Please do a hard-reload using Ctrl+F5 or Cmd+F5 or Ctrl+Shift+R or Cmd+Shift+R'
+        );
     } catch (err) {
       error = err;
     }

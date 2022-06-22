@@ -19,6 +19,7 @@ from model import ArenaEdit, ParseError, Schedule, ScheduleWithId, get_or_raise
 from scheduler import SchedulerThread
 
 OK_RESPONSE = '{"ok":true}'
+API_VERSION = "1"
 
 app = Flask(__name__)
 app.config.from_pyfile("config.py")
@@ -53,6 +54,11 @@ def error_bad_request(e: Any) -> Any:
     )
     response.content_type = "application/json"
     return response
+
+
+@app.route("/version")
+def version() -> str:
+    return API_VERSION
 
 
 @app.route("/schedules")
