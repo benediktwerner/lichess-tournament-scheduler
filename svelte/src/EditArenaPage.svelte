@@ -27,7 +27,9 @@
   let minRatingEnabled = !!minRating;
   let maxRatingEnabled = !!maxRating;
   let minGamesEnabled = !!minGames;
-  let teamBattleTeams = arena.teamBattle?.teams.join('\n') ?? '';
+  let teamBattleTeams = Object.entries(arena.teamBattle?.teams ?? {})
+    .map(([key, name]) => `${key} "${name}"`)
+    .join('\n');
   let teamBattleLeaders = arena.teamBattle?.nbLeaders;
 
   const handleSave = async () => {

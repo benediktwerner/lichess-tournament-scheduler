@@ -42,28 +42,28 @@ interface ArenaBase {
   createdBy: string;
   system: 'arena' | 'swiss';
   nbPlayers: number;
-  teamBattle?: {
-    teams: string[];
-    nbLeaders: number;
-  };
   minRating?: {
-    perf: string,
-    rating: number
-  },
+    perf: string;
+    rating: number;
+  };
   maxRating?: {
-    perf: string,
-    rating: number
-  },
+    perf: string;
+    rating: number;
+  };
   minRatedGames: {
-    perf?: string,
-    nb: number
-  },
+    perf?: string;
+    nb: number;
+  };
 }
 
 export interface TeamArena extends ArenaBase {
   variant: {
     name: string;
     key: string;
+  };
+  teamBattle?: {
+    teams: string[];
+    nbLeaders: number;
   };
 }
 
@@ -72,6 +72,12 @@ export interface ApiArena extends ArenaBase {
   berserkable?: true;
   noStreak?: true;
   variant: string;
+  teamBattle?: {
+    teams: {
+      [name: string]: string;
+    };
+    nbLeaders: number;
+  };
 }
 
 export interface ArenaEdit {
