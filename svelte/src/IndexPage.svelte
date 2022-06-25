@@ -22,10 +22,10 @@
   let teams: Schedules = null;
   let createdArenas: { [team: string]: TeamArena[] } = {};
 
-  {
-    const arenas = localStorage.getItem('cachedCreatedArenas');
-    if (arenas) createdArenas = JSON.parse(arenas);
-  }
+  // {
+  //   const arenas = localStorage.getItem('cachedCreatedArenas');
+  //   if (arenas) createdArenas = JSON.parse(arenas);
+  // }
 
   const createdIdsPromise = (async (): Promise<{
     [team: string]: string[];
@@ -42,21 +42,21 @@
     const createdIds = (await createdIdsPromise)[team];
 
     if (!createdIds) return;
-    if (
-      createdArenas[team] &&
-      createdIds.every((id) =>
-        createdArenas[team].some((arena) => arena.id === id)
-      )
-    ) {
-      createdArenas[team] = createdArenas[team].filter((arena) =>
-        createdIds.includes(arena.id)
-      );
-      localStorage.setItem(
-        'cachedCreatedArenas',
-        JSON.stringify(createdArenas)
-      );
-      return;
-    }
+    // if (
+    //   createdArenas[team] &&
+    //   createdIds.every((id) =>
+    //     createdArenas[team].some((arena) => arena.id === id)
+    //   )
+    // ) {
+    //   createdArenas[team] = createdArenas[team].filter((arena) =>
+    //     createdIds.includes(arena.id)
+    //   );
+    //   localStorage.setItem(
+    //     'cachedCreatedArenas',
+    //     JSON.stringify(createdArenas)
+    //   );
+    //   return;
+    // }
 
     const resp = await fetch(LICHESS_HOST + `/api/team/${team}/arena`);
     const text = await resp.text();
@@ -74,7 +74,7 @@
       }
     }
     createdArenas[team] = arenas;
-    localStorage.setItem('cachedCreatedArenas', JSON.stringify(createdArenas));
+    // localStorage.setItem('cachedCreatedArenas', JSON.stringify(createdArenas));
   };
 
   const load = async (reloadCreated: boolean) => {
