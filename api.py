@@ -157,6 +157,8 @@ def update_arena(
         "berserkable": BOOL[arena.berserkable],
         "streakable": BOOL[arena.streakable],
     }
+    if arena.startsAt:
+        data["startDate"] = arena.startsAt
     if arena.position:
         data["position"] = arena.position
     if arena.description:
