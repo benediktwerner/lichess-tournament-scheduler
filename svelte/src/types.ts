@@ -37,7 +37,6 @@ interface ArenaBase {
   };
   rated: boolean;
   minutes: number;
-  startsAt: number;
   secondsToStart: number;
   createdBy: string;
   system: 'arena' | 'swiss';
@@ -57,6 +56,7 @@ interface ArenaBase {
 }
 
 export interface TeamArena extends ArenaBase {
+  startsAt: number;
   variant: {
     name: string;
     key: string;
@@ -72,6 +72,7 @@ export interface ApiArena extends ArenaBase {
   berserkable?: true;
   noStreak?: true;
   variant: string;
+  startsAt: string;
   teamBattle?: {
     teams: {
       [name: string]: string;
@@ -84,6 +85,7 @@ export interface ArenaEdit {
   id: string;
   name: string;
   team: string;
+  startsAt?: number;
   clock: number;
   increment: number;
   minutes: number;

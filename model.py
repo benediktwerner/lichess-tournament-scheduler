@@ -189,6 +189,7 @@ class ArenaEdit:
     id: str
     name: str
     team: str
+    startsAt: Optional[int]
     clock: float
     increment: int
     minutes: int  # duration
@@ -214,6 +215,7 @@ class ArenaEdit:
             id,
             s.name,
             s.team,
+            None,
             s.clock,
             s.increment,
             s.minutes,
@@ -237,6 +239,7 @@ class ArenaEdit:
             get_or_raise(j, "id", str),
             get_or_raise(j, "name", str),
             get_or_raise(j, "team", str),
+            get_opt_or_raise(j, "startsAt", int),
             float(get_or_raise(j, "clock", (int, float))),
             get_or_raise(j, "increment", int),
             get_or_raise(j, "minutes", int),

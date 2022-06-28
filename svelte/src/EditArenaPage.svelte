@@ -27,6 +27,7 @@
   let minRatingEnabled = !!minRating;
   let maxRatingEnabled = !!maxRating;
   let minGamesEnabled = !!minGames;
+  let startTime = new Date(arena.startsAt).toISOString().slice(0, 16);
   let teamBattleTeams = Object.entries(arena.teamBattle?.teams ?? {})
     .map(([key, name]) => `${key} "${name}"`)
     .join('\n');
@@ -43,6 +44,7 @@
       id: arena.id,
       team,
       name,
+      startsAt: startTime ? +new Date(startTime + "Z") : undefined,
       description: description || null,
       clock,
       increment,
@@ -101,6 +103,10 @@
     <tr>
       <td>Description:<br />(optional)</td>
       <td><textarea cols="30" rows="5" bind:value={description} /></td>
+    </tr>
+    <tr>
+      <td>Start (UTC):</td>
+      <td><input type="datetime-local" bind:value={startTime} /></td>
     </tr>
     <tr>
       <td>Initial clock:</td>
