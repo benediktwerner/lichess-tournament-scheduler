@@ -9,7 +9,7 @@ from flask import Flask
 from model import Schedule, ScheduleWithId
 
 DATABASE = "database.sqlite"
-VERSION = 6
+VERSION = 7
 
 
 class Db:
@@ -245,7 +245,6 @@ class Db:
     def delete_schedule(self, id: int) -> None:
         with self.db as conn:
             conn.execute("DELETE FROM schedules WHERE id = ?", (id,))
-            conn.execute("DELETE FROM createdArenas WHERE scheduleId = ?", (id,))
 
     def add_log(self, text: str) -> None:
         with self.db as conn:
