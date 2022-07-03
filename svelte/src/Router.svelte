@@ -49,7 +49,9 @@
       page = Page.ScheduleEdit;
     }}
     gotoEditArena={async (id, t) => {
-      const resp = await fetch(LICHESS_HOST + '/api/tournament/' + id);
+      const resp = await fetch(LICHESS_HOST + '/api/tournament/' + id, {
+        headers: { 'Accept-Language': 'en' },
+      });
       if (!resp.ok) {
         alert(`Error while fetching tournament info: ${await resp.text()}`);
         return;
