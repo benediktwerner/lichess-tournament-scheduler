@@ -112,16 +112,22 @@ class Db:
         )
         return [(row["id"], row["team"]) for row in rows]
 
-    def created_upcoming_with_schedule(self, schedule_id: int) -> List[str]:
+    def created_upcoming_with_schedule(self, schedule_id: int) -> List[Tuple[str, int]]:
         rows = self._query(
-            "SELECT id FROM createdArenas WHERE scheduleId = ? and time > ? ORDER BY time ASC",
+            "SELECT id, time FROM createdArenas WHERE scheduleId = ? and time > ? ORDER BY time ASC",
             (schedule_id, int(time())),
         )
-        return [row["id"] for row in rows]
+        return [(row["id"], row["time"]) for row in rows]
 
     def get_scheduled(self) -> Set[Tuple[int, int]]:
         rows = self._query("SELECT scheduleId, time FROM createdArenas WHERE time > ?", (int(time()),))
         return set((row["scheduleId"], row["time"]) for row in rows)
+
+    def num_created_before(self, schedule_id: int, timestamp: int) -> int:
+        result = self._query_one("SELECT COUNT(*) FROM createdArenas WHERE scheduleId = ? AND time < ?", (schedule_id, timestamp))
+        if result:
+            return result[0]
+        return 0
 
     def previous_created(self, schedule_id: int, timestamp: int) -> Optional[str]:
         result = self._query_one(

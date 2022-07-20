@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+import re
 import sqlite3
-from calendar import timegm, monthrange
+from calendar import monthrange
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from time import time
 from typing import Any, List, Optional, Protocol
-import re
 
 
 @dataclass
@@ -146,7 +146,7 @@ class Schedule:
         while new < now:
             new = delta.find_next(new)
 
-        nxt = timegm(new.timetuple())
+        nxt = int(new.timestamp())
 
         endTime = int(time()) + self.days_in_advance * 24 * 60 * 60
         if self.scheduleEnd and self.scheduleEnd < endTime:
@@ -159,7 +159,7 @@ class Schedule:
                 if len(times) == 5:
                     break
             new = delta.find_next(new)
-            nxt = timegm(new.timetuple())
+            nxt = int(new.timestamp())
 
         return times
 
@@ -234,12 +234,12 @@ class ArenaEdit:
         return extract_team_battle_teams(self.team, self.teamBattleTeams)
 
     @staticmethod
-    def from_schedule(s: Schedule, id: str) -> ArenaEdit:
+    def from_schedule(s: Schedule, id: str, at: int) -> ArenaEdit:
         return ArenaEdit(
             id,
             s.name,
             s.team,
-            None,
+            at,
             s.clock,
             s.increment,
             s.minutes,

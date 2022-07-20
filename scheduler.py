@@ -1,16 +1,15 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from threading import Thread
 from time import sleep, time
 from typing import Any, Dict, List, Set, Tuple, cast
-from datetime import datetime
 
 import api
 from api import Arena
 from db import Db
 from model import Schedule, ScheduleWithId
-
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -44,8 +43,12 @@ class SchedulerThread(Thread):
                 logger.info(
                     f"Trying to create {s.name} for {s.team} at {nxt} ({datetime.utcfromtimestamp(nxt):%Y-%m-%d %H:%M:%S})"
                 )
+                if "{nth" in s.name or "{nth" in s.description:
+                    nth = db.num_created_before(s.id, nxt) + 1
+                else:
+                    nth = 0
                 prev, prev2 = db.previous_two_created(s.id, nxt)
-                id = api.schedule_arena(s, nxt, self.api_key, prev)
+                id = api.schedule_arena(s, nxt, self.api_key, nth, prev)
                 db.insert_created(id, s.id, s.team, nxt)
                 logger.info(f"Created {s.name} as {id}")
 
@@ -68,7 +71,9 @@ class SchedulerThread(Thread):
                 sleep(10)
                 if prev and s.description and "](next)" in s.description:
                     logger.info(f"Adding link to: {prev}")
-                    api.update_link_to_next_arena(prev, prev2, id, s.description, self.api_key)
+                    api.update_link_to_next_arena(
+                        prev, prev2, id, s.description, self.api_key
+                    )
                     sleep(10)
 
     def send_scheduled_messages(self) -> None:

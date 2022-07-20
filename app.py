@@ -171,12 +171,14 @@ def edit() -> str:
         leaders = schedule.teamBattleLeaders
         upcoming = db.created_upcoming_with_schedule(schedule.id)
         prev = db.previous_created(schedule.id, int(time()))
+        nth = db.num_created_before(schedule.id, int(time()))
 
-        for i, id in enumerate(upcoming):
+        for i, (id, at) in enumerate(upcoming):
             err = api.update_arena(
-                ArenaEdit.from_schedule(schedule, id),
+                ArenaEdit.from_schedule(schedule, id, at),
                 upcoming[i - 1] if i > 0 else prev,
                 upcoming[i + 1] if i + 1 < len(upcoming) else None,
+                nth + i + 1,
                 app.config["LICHESS_API_KEY"],
             )
             if err is not None:
@@ -220,7 +222,7 @@ def editArena() -> str:
 
         prev, nxt = db.prev_nxt_of_created(arena.id)
 
-    err = api.update_arena(arena, prev, nxt, app.config["LICHESS_API_KEY"])
+    err = api.update_arena(arena, prev, nxt, 0, app.config["LICHESS_API_KEY"])
     if err is not None:
         abort(500, description=f"Failed to edit tournament: {err}")
 

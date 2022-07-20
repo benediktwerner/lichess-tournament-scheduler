@@ -136,18 +136,30 @@
       <td>
         <input type="text" bind:value={name} required />
         {isTeamBattle ? 'Team Battle' : 'Arena'}
+        <br />
+        <small>
+          Use <code>{'{month}'}</code> to insert the month in which the arena
+          takes place.
+          <br />
+          Use <code>{'{nth}'}</code> to insert the number this tournament has in
+          the series. Use <code>{'{nth+5}'}</code> if there have already been 5 previous
+          tournaments created via other means.
+        </small>
       </td>
     </tr>
     <tr>
       <td>Description:<br />(optional)</td>
       <td>
+        <textarea cols="50" rows="10" bind:value={description} />
+        <br />
         <small>
           Use <code>prev</code> and <code>next</code> as the "URL" in a markdown
           link to automatically link to the previous/next tournament of this
           series: <code>[Next tournament](next)</code>
+          <br />
+          Use <code>{'{name}'}</code> to insert the name of the tournament. You
+          can also use <code>{'{month}'}</code> and <code>{'{nth}'}</code> as above.
         </small>
-        <br />
-        <textarea cols="50" rows="10" bind:value={description} />
       </td>
     </tr>
     <tr>
@@ -397,7 +409,6 @@
       <tr>
         <td />
         <td>
-          <br />
           <input
             type="number"
             bind:value={msgMinutesBefore}
@@ -407,14 +418,14 @@
           minutes before start
           <br />
           <br />
+          <textarea cols="60" rows="10" bind:value={msgTemplate} required />
+          <br />
           <small>
-            Use <code>{'{link}'}</code> to insert a link to the tournament
+            Use <code>{'{link}'}</code> to insert a link to the tournament.
             <br />
             The message will be sent from the account currently logged in on this
-            site
+            site.
           </small>
-          <br />
-          <textarea cols="60" rows="10" bind:value={msgTemplate} required />
         </td>
       </tr>
     {/if}
@@ -425,3 +436,9 @@
   </button>
   <button type="button" on:click={gotoIndex}>Cancel</button>
 </form>
+
+<style>
+  td {
+    padding-bottom: 8px;
+  }
+</style>

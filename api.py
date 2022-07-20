@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import json
-from dataclasses import dataclass
-from time import time
-from typing import List, Optional, Set
 import re
+from dataclasses import dataclass
+from datetime import datetime
+from time import time
+from typing import List, Optional
 
 import requests
 
@@ -74,9 +74,12 @@ def leader_teams(userId: str) -> List[str]:
     ]
 
 
-def schedule_arena(s: Schedule, at: int, api_key: str, prev: Optional[str]) -> str:
+def schedule_arena(
+    s: Schedule, at: int, api_key: str, nth: int, prev: Optional[str]
+) -> str:
+    name = format_name(s.name, at, nth)
     data = {
-        "name": s.name,
+        "name": name,
         "clockTime": s.clock,
         "clockIncrement": s.increment,
         "minutes": s.minutes,
@@ -93,13 +96,9 @@ def schedule_arena(s: Schedule, at: int, api_key: str, prev: Optional[str]) -> s
     if s.position:
         data["position"] = s.position
     if s.description:
-        desc = s.description
-        if prev:
-            desc = desc.replace("](prev)", f"]({HOST + ARENA_URL.format(prev)})")
-        else:
-            desc = re.sub(r"\[.*?\]\(prev\)", "", desc)
-        desc = re.sub(r"\[(.*?)\]\(next\)", "", r"\1")
-        data["description"] = desc
+        data["description"] = format_description(
+            s.description, prev, None, name, at, nth
+        )
     if s.minRating:
         data["conditions.minRating.rating"] = s.minRating
     if s.maxRating:
@@ -149,10 +148,12 @@ def terminate_arena(id: str, api_key: str) -> None:
 
 
 def update_arena(
-    arena: ArenaEdit, prev: Optional[str], nxt: Optional[str], api_key: str
+    arena: ArenaEdit, prev: Optional[str], nxt: Optional[str], nth: int, api_key: str
 ) -> Optional[str]:
+    at = arena.startsAt or 0
+    name = format_name(arena.name, at, nth)
     data = {
-        "name": arena.name,
+        "name": name,
         "clockTime": arena.clock,
         "clockIncrement": arena.increment,
         "minutes": arena.minutes,
@@ -166,17 +167,9 @@ def update_arena(
     if arena.position:
         data["position"] = arena.position
     if arena.description:
-        desc = arena.description
-        if prev:
-            desc = desc.replace("](prev)", f"]({HOST + ARENA_URL.format(prev)})")
-        else:
-            desc = re.sub(r"\[.*?\]\(prev\)", "", desc)
-        if nxt:
-            nxt_url = HOST + ARENA_URL.format(nxt)
-            desc = desc.replace("](next)", f"]({nxt_url})")
-        else:
-            desc = re.sub(r"\[(.*?)\]\(next\)", "", r"\1")
-        data["description"] = desc
+        data["description"] = format_description(
+            arena.description, prev, nxt, name, at, nth
+        )
     if arena.minRating:
         data["conditions.minRating.rating"] = arena.minRating
     if arena.maxRating:
@@ -195,24 +188,25 @@ def update_arena(
 
 
 def update_link_to_next_arena(
-    id: str, prev: Optional[str], nxt: str, desc: str, api_key: str
+    id: str, prev: Optional[str], nxt: str, desc: str, nth: int, api_key: str
 ) -> None:
     resp = requests.get(HOST + ENDPOINT_GET_ARENA.format(id))
     resp.raise_for_status()
     arena = resp.json()
 
-    if prev:
-        desc = desc.replace("](prev)", f"]({HOST + ARENA_URL.format(prev)})")
-    else:
-        desc = re.sub(r"\[.*?\]\(prev\)", "", desc)
-    desc = desc.replace("](next)", f"]({HOST + ARENA_URL.format(nxt)})")
+    name = arena["fullName"]
+    if name.endswith(" Arena"):
+        name = name[: -len(" Arena")]
+    elif name.endswith(" Team Battle"):
+        name = name[: -len(" Team Battle")]
+    at = int(datetime.strptime(arena["startsAt"][:-5], "%Y-%m-%dT%H:%M:%S").timestamp())
 
     data = {
         "clockTime": arena["clock"]["limit"] / 60,
         "clockIncrement": arena["clock"]["increment"],
         "minutes": arena["minutes"],
         "variant": arena["variant"],
-        "description": desc,
+        "description": format_description(desc, prev, nxt, name, at, nth),
     }
     if "minGames" in arena:
         data["conditions.nbRatedGames.nb"] = arena["minRatedGames"]["nb"]
@@ -234,3 +228,31 @@ def send_team_msg(msg: MsgToSend) -> None:
         headers={"Authorization": f"Bearer {msg.token}"},
         data={"message": msg.text()},
     ).raise_for_status()
+
+
+def format_name(name: str, at: int, nth: int) -> str:
+    date = datetime.utcfromtimestamp(at)
+    name = name.replace("{month}", f"{date:%B}")
+    name = name.replace("{nth}", str(nth))
+    name = re.sub(r"{nth\+(\d+)}", lambda m: str(nth + int(m.group(1))), name)
+    return name
+
+
+def format_description(
+    desc: str, prev: Optional[str], nxt: Optional[str], name: str, at: int, nth: int
+) -> str:
+    if prev:
+        desc = desc.replace("](prev)", f"]({HOST + ARENA_URL.format(prev)})")
+    else:
+        desc = re.sub(r"\[.*?\]\(prev\)", "", desc)
+    if nxt:
+        nxt_url = HOST + ARENA_URL.format(nxt)
+        desc = desc.replace("](next)", f"]({nxt_url})")
+    else:
+        desc = re.sub(r"\[(.*?)\]\(next\)", "", r"\1")
+    date = datetime.utcfromtimestamp(at)
+    desc = desc.replace("{month}", f"{date:%B}")
+    desc = desc.replace("{nth}", str(nth))
+    desc = re.sub(r"{nth\+(\d+)}", lambda m: str(nth + int(m.group(1))), desc)
+    desc = desc.replace("{name}", name)
+    return desc
