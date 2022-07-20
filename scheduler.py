@@ -43,7 +43,7 @@ class SchedulerThread(Thread):
                 logger.info(
                     f"Trying to create {s.name} for {s.team} at {nxt} ({datetime.utcfromtimestamp(nxt):%Y-%m-%d %H:%M:%S})"
                 )
-                if "{nth" in s.name or "{nth" in s.description:
+                if "{nth" in s.name or (s.description and "{nth" in s.description):
                     nth = db.num_created_before(s.id, nxt) + 1
                 else:
                     nth = 0
