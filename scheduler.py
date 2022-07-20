@@ -26,14 +26,14 @@ class SchedulerThread(Thread):
             schedules = db.schedules()
 
             now = time()
-            scheduled = ScheduledCache()
+            scheduled = db.get_scheduled()
             to_schedule: List[Tuple[int, ScheduleWithId]] = []
             for s in schedules:
                 for nxt in s.next_times():
                     # don't schedule if starting too soon (in <1h)
                     if nxt < now + 60 * 60:
                         continue
-                    if scheduled.is_scheduled(s, nxt):
+                    if (s.id, nxt) in scheduled:
                         continue
                     to_schedule.append((nxt, s))
 
@@ -116,22 +116,3 @@ class SchedulerThread(Thread):
                     except Exception:
                         pass
             sleep(5 * 60)
-
-
-class ScheduledCache:
-    def __init__(self) -> None:
-        self.cache: Dict[str, Set[Arena]] = {}
-
-    def is_scheduled(self, s: Schedule, t: int) -> bool:
-        arenas = self.get_arenas(s.team)
-        arena = Arena(s.name + " Arena", t)
-        team_battle = Arena(s.name + " Team Battle", t)
-        return arena in arenas or team_battle in arenas
-
-    def get_arenas(self, team: str) -> Set[Arena]:
-        arenas = self.cache.get(team)
-        if arenas is None:
-            arenas = api.future_team_arenas(team)
-            self.cache[team] = arenas
-            sleep(10)
-        return arenas

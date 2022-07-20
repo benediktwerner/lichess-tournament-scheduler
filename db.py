@@ -119,6 +119,10 @@ class Db:
         )
         return [row["id"] for row in rows]
 
+    def get_scheduled(self) -> Set[Tuple[int, int]]:
+        rows = self._query("SELECT scheduleId, time FROM createdArenas WHERE time > ?", (int(time()),))
+        return set((row["scheduleId"], row["time"]) for row in rows)
+
     def previous_created(self, schedule_id: int, timestamp: int) -> Optional[str]:
         result = self._query_one(
             "SELECT id FROM createdArenas WHERE scheduleId = ? and time < ? ORDER BY time DESC LIMIT 1",

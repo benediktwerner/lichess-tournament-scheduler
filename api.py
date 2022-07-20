@@ -74,15 +74,6 @@ def leader_teams(userId: str) -> List[str]:
     ]
 
 
-def future_team_arenas(teamId: str) -> Set[Arena]:
-    res = requests.get(HOST + ENDPOINT_TEAM_ARENAS.format(teamId))
-    res.raise_for_status()
-    lines = res.text.splitlines()
-    arenas = [Arena.from_json(json.loads(t)) for t in lines]
-    now = time()
-    return {a for a in arenas if a.time > now}
-
-
 def schedule_arena(s: Schedule, at: int, api_key: str, prev: Optional[str]) -> str:
     data = {
         "name": s.name,
