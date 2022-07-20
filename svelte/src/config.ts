@@ -39,4 +39,5 @@ export const SCHEDULE_NAMES = [
   'Every x days',
   'Every x weeks',
   'Every x months',
+  'Specific weekday of each month',
 ];

@@ -106,7 +106,7 @@ class SchedulerThread(Thread):
                 self.schedule_next_arenas()
                 self.send_scheduled_messages()
             except Exception as e:
-                logger.error(f"Error during scheduling: {e}")
+                logger.error(f"Error during scheduling: {e}", exc_info=True)
                 if hasattr(e, "response"):
                     try:
                         response = cast(Any, e).response

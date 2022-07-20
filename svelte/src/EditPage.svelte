@@ -35,8 +35,11 @@
   let maxRatingEnabled = !!maxRating;
   let minGamesEnabled = !!minGames;
   const day = schedule?.scheduleDay ?? 0;
-  let scheduleDay = day >= 1000 ? Math.floor(day / 1000) + 7 : day;
+  let scheduleDay =
+    day >= 10_000 ? 11 : day >= 1000 ? Math.floor(day / 1000) + 7 : day;
   let scheduleStep = day >= 1000 ? day % 1000 : 1;
+  let scheduleWeekday = day >= 10_000 ? day % 10 : 0;
+  let scheduleWeekdayOrdinal = day >= 10_000 ? Math.floor((day % 100) / 10) : 0;
   let scheduleTime = schedule ? formatTime(schedule.scheduleTime) : null;
   let scheduleStart = formatDate(schedule?.scheduleStart);
   let scheduleEnd = formatEndDate(schedule?.scheduleEnd);
@@ -78,10 +81,15 @@
       maxRating: maxRatingEnabled && maxRating ? maxRating : null,
       minGames: minGamesEnabled && minGames ? minGames : null,
       scheduleDay:
-        scheduleDay > 7 ? (scheduleDay - 7) * 1000 + scheduleStep : scheduleDay,
+        scheduleDay === 11
+          ? 10_000 + scheduleWeekdayOrdinal * 10 + scheduleWeekday
+          : scheduleDay > 7
+          ? (scheduleDay - 7) * 1000 + scheduleStep
+          : scheduleDay,
       scheduleTime: time,
       scheduleStart:
-        (scheduleStartEnabled && scheduleStart) || scheduleDay > 7
+        (scheduleStartEnabled && scheduleStart) ||
+        (scheduleDay > 7 && scheduleDay < 11)
           ? Math.floor(+new Date(scheduleStart) / 1000)
           : null,
       scheduleEnd:
@@ -255,7 +263,7 @@
             <option value={i}>{s}</option>
           {/each}
         </select>
-        {#if scheduleDay > 7}
+        {#if scheduleDay > 7 && scheduleDay < 11}
           <input
             type="number"
             min="1"
@@ -265,6 +273,24 @@
             required
           />
         {/if}
+        {#if scheduleDay === 11}
+          <select bind:value={scheduleWeekdayOrdinal} required>
+            <option value={0}>First</option>
+            <option value={1}>Second</option>
+            <option value={2}>Third</option>
+            <option value={3}>Fourth</option>
+            <option value={4}>Last</option>
+          </select>
+          <select bind:value={scheduleWeekday} required>
+            <option value={0}>Monday</option>
+            <option value={1}>Tuesday</option>
+            <option value={2}>Wednesday</option>
+            <option value={3}>Thursday</option>
+            <option value={4}>Friday</option>
+            <option value={5}>Saturday</option>
+            <option value={6}>Sunday</option>
+          </select>
+        {/if}
       </td>
     </tr>
     <tr>
@@ -272,18 +298,23 @@
       <td><input type="time" bind:value={scheduleTime} required /></td>
     </tr>
     <tr>
-      <td>{scheduleDay < 8 ? 'Schedule start' : 'Starting from'}:</td>
+      <td
+        >{scheduleDay < 8 || scheduleDay === 11
+          ? 'Schedule start'
+          : 'Starting from'}:</td
+      >
       <td>
-        {#if scheduleDay < 8}
+        {#if scheduleDay < 8 || scheduleDay === 11}
           <input type="checkbox" bind:checked={scheduleStartEnabled} />
         {/if}
         <input
           type="date"
-          disabled={!scheduleStartEnabled && scheduleDay < 8}
+          disabled={!scheduleStartEnabled &&
+            (scheduleDay < 8 || scheduleDay === 11)}
           bind:value={scheduleStart}
-          required={scheduleDay > 7}
+          required={scheduleDay > 7 && scheduleDay < 11}
         />
-        {#if scheduleDay < 8}
+        {#if scheduleDay < 8 || scheduleDay === 11}
           <small>
             (if enabled, only schedule tournaments that will start on this day
             or later)
@@ -367,7 +398,12 @@
         <td />
         <td>
           <br />
-          <input type="number" bind:value={msgMinutesBefore} min="10" required />
+          <input
+            type="number"
+            bind:value={msgMinutesBefore}
+            min="10"
+            required
+          />
           minutes before start
           <br />
           <br />

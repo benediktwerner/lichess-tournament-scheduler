@@ -5,7 +5,7 @@ from calendar import timegm, monthrange
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from time import time
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Protocol
 import re
 
 
@@ -59,13 +59,23 @@ class Schedule:
     def from_json(j: dict, token: str) -> Schedule:
         scheduleDay = get_or_raise(j, "scheduleDay", int)
         scheduleStart = get_opt_or_raise(j, "scheduleStart", int)
-        if scheduleDay < 0 or 7 < scheduleDay <= 1000 or scheduleDay >= 4000:
+        if (
+            scheduleDay < 0
+            or 7 < scheduleDay <= 1000
+            or 4000 <= scheduleDay < 10_000
+            or 10_100 <= scheduleDay
+        ):
             raise ParseError(f"Invalid value for scheduleDay: {scheduleDay}")
-        if scheduleDay > 1000:
+        if 1000 < scheduleDay < 10_000:
             if scheduleDay % 1000 == 0:
                 raise ParseError(f"Invalid value for scheduleDay: {scheduleDay}")
             if scheduleStart is None:
                 raise ParseError("Missing scheduleStart for unregular period")
+        elif scheduleDay >= 10_000:
+            if scheduleDay % 10 > 6:
+                raise ParseError(f"Invalid weekday: {scheduleDay % 10}")
+            if scheduleDay % 100 // 10 > 4:
+                raise ParseError(f"Invalid weekday ordinal: {scheduleDay}")
         return Schedule(
             get_or_raise(j, "name", str),
             get_or_raise(j, "team", str),
@@ -101,14 +111,14 @@ class Schedule:
             second=0,
             microsecond=0,
         )
-        delta: timedelta | int
+        delta: NxtDateFinder
 
         if self.scheduleDay == 0:
-            delta = timedelta(days=1)
+            delta = AddDelta(timedelta(days=1))
         elif self.scheduleDay < 8:
             new += timedelta(days=self.scheduleDay - now.isoweekday())
-            delta = timedelta(days=7)
-        else:
+            delta = AddDelta(timedelta(days=7))
+        elif self.scheduleDay < 10_000:
             if not self.scheduleStart:
                 return []
             new = datetime.utcfromtimestamp(self.scheduleStart).replace(
@@ -122,14 +132,19 @@ class Schedule:
             if period <= 0:
                 return []
             if unit == 1:  # days
-                delta = timedelta(days=period)
+                delta = AddDelta(timedelta(days=period))
             elif unit == 2:  # weeks
-                delta = timedelta(weeks=period)
+                delta = AddDelta(timedelta(weeks=period))
             else:  # months
-                delta = period
+                delta = AddMonths(period)
+        else:
+            weekday = self.scheduleDay % 10
+            ordinal = self.scheduleDay % 100 // 10
+            delta = XofMonth(weekday, ordinal)
+            new = delta.in_month(new)
 
         while new < now:
-            new = add_delta(new, delta)
+            new = delta.find_next(new)
 
         nxt = timegm(new.timetuple())
 
@@ -143,7 +158,7 @@ class Schedule:
                 times.append(nxt)
                 if len(times) == 5:
                     break
-            new = add_delta(new, delta)
+            new = delta.find_next(new)
             nxt = timegm(new.timetuple())
 
         return times
@@ -302,11 +317,51 @@ def add_months(date: datetime, amnt: int) -> datetime:
     return date.replace(year=year, month=month, day=day)
 
 
-def add_delta(date: datetime, delta: timedelta | int) -> datetime:
-    if isinstance(delta, int):
-        return add_months(date, delta)
-    else:
-        return date + delta
+class NxtDateFinder(Protocol):
+    def find_next(self, date: datetime) -> datetime:
+        pass
+
+
+class AddDelta:
+    def __init__(self, delta: timedelta):
+        self.delta = delta
+
+    def find_next(self, date: datetime) -> datetime:
+        return date + self.delta
+
+
+class AddMonths:
+    def __init__(self, months: int):
+        self.months = months
+
+    def find_next(self, date: datetime) -> datetime:
+        month = date.month - 1 + self.months
+        year = date.year + month // 12
+        month = month % 12 + 1
+        day = min(date.day, monthrange(year, month)[1])
+        return date.replace(year=year, month=month, day=day)
+
+
+class XofMonth:
+    def __init__(self, weekday: int, ordinal: int):
+        self.weekday = weekday
+        self.ordinal = ordinal
+
+    def find_next(self, date: datetime) -> datetime:
+        if date.month == 12:
+            date = date.replace(year=date.year + 1, month=1)
+        else:
+            date = date.replace(month=date.month + 1)
+        return self.in_month(date)
+
+    def in_month(self, date: datetime) -> datetime:
+        first, days = monthrange(date.year, date.month)
+        if self.ordinal == 4:  # last
+            last = (days + first - 1) % 7
+            day = days - (last - self.weekday) % 7
+        else:
+            day = (self.weekday - first) % 7 + 1 + self.ordinal * 7
+        return date.replace(day=day)
 
 
 @dataclass
@@ -317,4 +372,6 @@ class MsgToSend:
     token: str
 
     def text(self) -> str:
-        return self.template.replace("{link}", f"https://lichess.org/tournament/{self.arenaId}")
+        return self.template.replace(
+            "{link}", f"https://lichess.org/tournament/{self.arenaId}"
+        )
