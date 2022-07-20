@@ -59,10 +59,10 @@
         localStorage.setItem('hasTeamScope', 'true');
         history.pushState(null, '', baseUrl());
       } else if (
-        accessContext?.token &&
-        !localStorage.getItem('hasTeamScope')
+        accessContext?.token && forceLogout
       ) {
         await handleLogout();
+        forceLogout = false;
       }
     } catch (err) {
       error = err;
@@ -72,13 +72,14 @@
   let error = null;
   let accessContext = loadAccessContext();
   let outdated = true;
+  let forceLogout = !localStorage.getItem('hasTeamScope');
   init();
 </script>
 
 <h1>Lichess Tournament Scheduler</h1>
 
 {#if !outdated}
-  {#if accessContext?.token}
+  {#if accessContext?.token && !forceLogout}
     <button class="logout" type="button" on:click={handleLogout}>Logout</button>
     <Router token={accessContext.token.value} />
   {:else}
