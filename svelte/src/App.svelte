@@ -72,7 +72,7 @@
   let error = null;
   let accessContext = loadAccessContext();
   let outdated = true;
-  let forceLogout = !!localStorage.getItem('hasTeamScope');
+  let forceLogout = !localStorage.getItem('hasTeamScope');
   init();
 </script>
 
