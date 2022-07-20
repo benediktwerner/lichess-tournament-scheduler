@@ -58,6 +58,7 @@
         localStorage.setItem('token', JSON.stringify(accessContext));
         localStorage.setItem('hasTeamScope', 'true');
         history.pushState(null, '', baseUrl());
+        forceLogout = false;
       } else if (
         accessContext?.token && forceLogout
       ) {
