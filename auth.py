@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass
 from time import time
 from typing import Dict, List, Optional
 
-from flask import Flask, abort, current_app, request
+from flask import Flask, abort, request
 from requests import HTTPError
 
 import api
@@ -13,6 +14,9 @@ import api
 CACHE_SIZE = 100
 CACHE_SECS = 10 * 60
 RATE_LIMIT_TIMEOUT_SECS = 10 * 60
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -93,11 +97,7 @@ class Auth:
 
         try:
             res = api.verify_token(token)
-            if (
-                not res
-                or "tournament:write" not in res.scopes
-                or res.expires < time()
-            ):
+            if not res or "tournament:write" not in res.scopes or res.expires < time():
                 abort(403)
 
             if res.userId in self.admins:
@@ -111,7 +111,7 @@ class Auth:
             user.assert_leader_or_admin()
             return user
         except HTTPError as e:
-            current_app.logger.error(f"Error during auth requests to Lichess: {e}")
+            logger.error(f"Error during auth requests to Lichess: {e}")
             if e.response.status_code == 429:
                 self.rate_limited_until = int(time()) + RATE_LIMIT_TIMEOUT_SECS
                 abort(503)

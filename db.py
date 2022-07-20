@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import sqlite3
 from time import time
 from typing import Any, List, Optional, Tuple
@@ -9,7 +10,11 @@ from flask import Flask
 from model import Schedule, ScheduleWithId
 
 DATABASE = "database.sqlite"
-VERSION = 7
+VERSION = 8
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class Db:
@@ -20,7 +25,7 @@ class Db:
             else "sqlite_master"
         )
         if not self._query(f"SELECT * FROM {sqlite_schema}"):
-            app.logger.info("No tables. Initializing database schema.")
+            logger.info("No tables. Initializing database schema.")
             with self.db as trans:
                 with app.open_resource("schema.sql", mode="r") as f:
                     trans.executescript(f.read())
@@ -36,12 +41,12 @@ class Db:
                 f"Db schema version is {version} which is higher than the latest known version ({VERSION})."
             )
 
-        app.logger.info(f"Db schema version is {version}. Migrating up to {VERSION}.")
+        logger.info(f"Db schema version is {version}. Migrating up to {VERSION}.")
 
         with self.db as trans:
             while version < VERSION:
                 version += 1
-                app.logger.info(f"Migrating to {version}")
+                logger.info(f"Migrating to {version}")
                 with app.open_resource(f"migrations/{version}.sql", mode="r") as f:
                     trans.executescript(f.read())
             trans.execute(f"PRAGMA user_version = {VERSION}")
@@ -245,25 +250,3 @@ class Db:
     def delete_schedule(self, id: int) -> None:
         with self.db as conn:
             conn.execute("DELETE FROM schedules WHERE id = ?", (id,))
-
-    def add_log(self, text: str) -> None:
-        with self.db as conn:
-            conn.execute(
-                """INSERT INTO logs (
-                    text,
-                    time
-                   ) VALUES (?, ?)
-                """,
-                (text, int(time() * 1_000_000)),
-            )
-
-    def clean_logs(self) -> None:
-        with self.db as conn:
-            conn.execute(
-                "DELETE FROM logs WHERE time < ?",
-                (int(time() * 1_000_000) - 31 * 24 * 60 * 60 * 1_000_000,),
-            )
-
-    def logs(self) -> List[Tuple[int, str]]:
-        logs = self._query("SELECT * FROM logs")
-        return [(r["time"], r["text"]) for r in logs]

@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import logging
 from typing import Any
-from datetime import datetime
 from time import time
 from collections import defaultdict
 
@@ -37,7 +36,7 @@ try:
     create_tables()
 
     auth = Auth(app)
-    SchedulerThread(app.config["LICHESS_API_KEY"], app.logger).start()
+    SchedulerThread(app.config["LICHESS_API_KEY"]).start()
 
 except Exception as e:
     app.logger.error(f"Exception during startup: {e}")
@@ -225,16 +224,3 @@ def cancel(id: str) -> str:
 
         db.delete_created(id)
         return OK_RESPONSE
-
-
-@app.route("/logs", methods=["GET"])
-def logs() -> str:
-    auth().assert_admin()
-
-    with Db() as db:
-        logs = db.logs()
-
-    return "\n".join(
-        f"[{datetime.utcfromtimestamp(time / 1_000_000):%Y-%m-%d %H:%M:%S %f}] {text}"
-        for time, text in logs
-    )

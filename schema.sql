@@ -29,8 +29,3 @@ CREATE TABLE createdArenas (
     team TEXT NOT NULL,
     time INT NOT NULL
 );
-
-CREATE TABLE logs (
-    text TEXT NOT NULL,
-    time INT NOT NULL
-);

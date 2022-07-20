@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from logging import Logger
+import logging
 from threading import Thread
 from time import sleep, time
 from typing import Any, Dict, List, Set, Tuple, cast
+from datetime import datetime
 
 import api
 from api import Arena
@@ -11,11 +12,14 @@ from db import Db
 from model import Schedule, ScheduleWithId
 
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+
 class SchedulerThread(Thread):
-    def __init__(self, api_key: str, logger: Logger) -> None:
+    def __init__(self, api_key: str) -> None:
         super().__init__(daemon=True)
         self.api_key = api_key
-        self.logger = logger
 
     def schedule_next_arenas(self) -> None:
         with Db() as db:
@@ -37,36 +41,30 @@ class SchedulerThread(Thread):
             to_schedule.sort(key=lambda x: x[0])
 
             for nxt, s in to_schedule:
-                db.add_log(f"Trying to create {s.name} for {s.team}")
+                logger.info(f"Trying to create {s.name} for {s.team} at {nxt} ({datetime.utcfromtimestamp(nxt):%Y-%m-%d %H:%M:%S})")
                 prev = db.previous_created(s.id, nxt)
                 id = api.schedule_arena(s, nxt, self.api_key, prev)
                 db.insert_created(id, s.id, s.team, nxt)
-                db.add_log(f"Created {s.name}")
+                logger.info(f"Created {s.name}")
                 sleep(10)
                 if prev and s.description and "](next)" in s.description:
-                    db.add_log(f"Adding link to: {prev}")
+                    logger.info(f"Adding link to: {prev}")
                     api.update_link_to_next_arena(prev, id, self.api_key)
                     sleep(10)
 
     def run(self) -> None:
         while True:
-            with Db() as db:
-                db.clean_logs()
-                db.add_log("Running scheduling")
+            logger.info("Running scheduling")
             try:
                 self.schedule_next_arenas()
             except Exception as e:
-                with Db() as db:
-                    db.add_log("Error during scheduling")
-                self.logger.error(f"Error during tournament creation: {e}")
+                logger.error(f"Error during tournament creation: {e}")
                 if hasattr(e, "response"):
                     try:
                         response = cast(Any, e).response
-                        self.logger.error(
+                        logger.error(
                             f"Response: {response.status_code} {response.text}"
                         )
-                        with Db() as db:
-                            db.add_log(f"Response: {response.status_code}")
                     except Exception:
                         pass
             sleep(60 * 60)
