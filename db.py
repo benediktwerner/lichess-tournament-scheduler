@@ -126,6 +126,19 @@ class Db:
         )
         return result["id"] if result else None
 
+    def previous_two_created(self, schedule_id: int, timestamp: int) -> Tuple[Optional[str], Optional[str]]:
+        rows = self._query(
+            "SELECT id FROM createdArenas WHERE scheduleId = ? and time < ? ORDER BY time DESC LIMIT 2",
+            (schedule_id, timestamp),
+        )
+        prevs = [row["id"] for row in rows]
+        if len(prevs) < 1:
+            return None, None
+        if len(prevs) == 1:
+            return prevs[0], None
+        return prevs[0], prevs[1]
+
+
     def prev_nxt_of_created(self, id: str) -> Tuple[Optional[str], Optional[str]]:
         result = self._query_one(
             "SELECT scheduleId, time FROM createdArenas WHERE id = ?",

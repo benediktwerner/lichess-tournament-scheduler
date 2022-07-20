@@ -44,7 +44,7 @@ class SchedulerThread(Thread):
                 logger.info(
                     f"Trying to create {s.name} for {s.team} at {nxt} ({datetime.utcfromtimestamp(nxt):%Y-%m-%d %H:%M:%S})"
                 )
-                prev = db.previous_created(s.id, nxt)
+                prev, prev2 = db.previous_two_created(s.id, nxt)
                 id = api.schedule_arena(s, nxt, self.api_key, prev)
                 db.insert_created(id, s.id, s.team, nxt)
                 logger.info(f"Created {s.name} as {id}")
@@ -68,7 +68,7 @@ class SchedulerThread(Thread):
                 sleep(10)
                 if prev and s.description and "](next)" in s.description:
                     logger.info(f"Adding link to: {prev}")
-                    api.update_link_to_next_arena(prev, id, self.api_key)
+                    api.update_link_to_next_arena(prev, prev2, id, s.description, self.api_key)
                     sleep(10)
 
     def send_scheduled_messages(self) -> None:

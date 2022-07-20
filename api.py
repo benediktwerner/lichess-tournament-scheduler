@@ -107,7 +107,7 @@ def schedule_arena(s: Schedule, at: int, api_key: str, prev: Optional[str]) -> s
             desc = desc.replace("](prev)", f"]({HOST + ARENA_URL.format(prev)})")
         else:
             desc = re.sub(r"\[.*?\]\(prev\)", "", desc)
-        desc = desc.replace("](next)", "](soon)")
+        desc = re.sub(r"\[(.*?)\]\(next\)", "", r"\1")
         data["description"] = desc
     if s.minRating:
         data["conditions.minRating.rating"] = s.minRating
@@ -182,11 +182,9 @@ def update_arena(
             desc = re.sub(r"\[.*?\]\(prev\)", "", desc)
         if nxt:
             nxt_url = HOST + ARENA_URL.format(nxt)
-            desc = desc.replace("](soon)", f"]({nxt_url})").replace(
-                "](next)", f"]({nxt_url})"
-            )
+            desc = desc.replace("](next)", f"]({nxt_url})")
         else:
-            desc = desc.replace("](next)", "](soon)")
+            desc = re.sub(r"\[(.*?)\]\(next\)", "", r"\1")
         data["description"] = desc
     if arena.minRating:
         data["conditions.minRating.rating"] = arena.minRating
@@ -205,24 +203,25 @@ def update_arena(
         return resp.text
 
 
-def update_link_to_next_arena(id: str, nxt: str, api_key: str) -> None:
+def update_link_to_next_arena(
+    id: str, prev: Optional[str], nxt: str, desc: str, api_key: str
+) -> None:
     resp = requests.get(HOST + ENDPOINT_GET_ARENA.format(id))
     resp.raise_for_status()
     arena = resp.json()
-    desc = arena.get("description")
-    if not desc or ("](soon)" not in desc and "](next)" not in desc):
-        return
 
-    nxt_url = HOST + ARENA_URL.format(nxt)
+    if prev:
+        desc = desc.replace("](prev)", f"]({HOST + ARENA_URL.format(prev)})")
+    else:
+        desc = re.sub(r"\[.*?\]\(prev\)", "", desc)
+    desc = desc.replace("](next)", f"]({HOST + ARENA_URL.format(nxt)})")
 
     data = {
         "clockTime": arena["clock"]["limit"] / 60,
         "clockIncrement": arena["clock"]["increment"],
         "minutes": arena["minutes"],
         "variant": arena["variant"],
-        "description": desc.replace("](soon)", f"]({nxt_url})").replace(
-            "](next)", f"]({nxt_url})"
-        ),
+        "description": desc,
     }
     if "minGames" in arena:
         data["conditions.nbRatedGames.nb"] = arena["minRatedGames"]["nb"]
