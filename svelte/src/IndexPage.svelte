@@ -21,6 +21,7 @@
   export let gotoEditArena: (id: string, team: string) => void;
   let teams: Schedules = null;
   let createdArenas: { [team: string]: TeamArena[] } = {};
+  let teamsWithBadTokens = new Set();
 
   // {
   //   const arenas = localStorage.getItem('cachedCreatedArenas');
@@ -77,6 +78,13 @@
     // localStorage.setItem('cachedCreatedArenas', JSON.stringify(createdArenas));
   };
 
+  const fetchTeamsWithBadTokens = async (): Promise<string[]> => {
+    const resp = await fetch(API_HOST + '/badTokens', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return await resp.json();
+  };
+
   const load = async (reloadCreated: boolean) => {
     const resp = await fetch(API_HOST + '/schedules', {
       headers: { Authorization: `Bearer ${token}` },
@@ -84,6 +92,10 @@
     if (resp.ok) {
       teams = await resp.json();
       if (reloadCreated) {
+        try {
+          teamsWithBadTokens = new Set(await fetchTeamsWithBadTokens());
+        } catch {}
+
         let promise = Promise.resolve();
         for (const [team, _] of teams) {
           promise = promise
@@ -124,6 +136,19 @@
     return `Every ${period} ${unit}`;
   };
 
+  const replaceToken = async (team: string) => {
+    const resp = await fetch(API_HOST + '/replaceToken/' + team, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (resp.ok) {
+      teamsWithBadTokens.delete(team);
+      teamsWithBadTokens = teamsWithBadTokens;
+    } else {
+      alert('Error: ' + (await resp.text()));
+    }
+  };
+
   load(true);
 </script>
 
@@ -134,6 +159,15 @@
     <h2>
       <a href="https://lichess.org/team/{team}" target="_blank">{team}</a>
     </h2>
+    {#if teamsWithBadTokens.has(team)}
+      <span class="error">
+        One or more tokens used to authorize team messages for this team have
+        expired.
+      </span>
+      <button on:click={() => replaceToken(team)}>
+        Replace with your current token
+      </button><br />
+    {/if}
     {#if createdArenas[team] && createdArenas[team].length > 0}
       <h4>Created tournaments</h4>
       <table class="overview-table">

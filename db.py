@@ -3,11 +3,11 @@ from __future__ import annotations
 import logging
 import sqlite3
 from time import time
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional, Set, Tuple
 
 from flask import Flask
 
-from model import Schedule, ScheduleWithId
+from model import ArenaEdit, MsgToSend, Schedule, ScheduleWithId
 
 DATABASE = "database.sqlite"
 VERSION = 8
@@ -83,6 +83,17 @@ class Db:
                    ) VALUES (?, ?, ?, ?)
                 """,
                 (id, schedule_id, team, t),
+            )
+
+    def update_created(self, arena: ArenaEdit) -> None:
+        with self.db as conn:
+            conn.execute(
+                "UPDATE createdArenas SET time = ? WHERE id = ?",
+                (arena.startsAt, arena.id),
+            )
+            conn.execute(
+                "UPDATE scheduledMsgs SET sendTime = ? - (60 * minutesBefore) WHERE arenaId = ?",
+                (arena.startsAt, arena.id),
             )
 
     def delete_created(self, id: str) -> None:
@@ -167,8 +178,11 @@ class Db:
                     scheduleEnd,
                     teamBattleTeams,
                     teamBattleLeaders,
-                    daysInAdvance
-                   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    daysInAdvance,
+                    msgMinutesBefore,
+                    msgTemplate,
+                    msgToken
+                   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     s.name,
@@ -192,6 +206,9 @@ class Db:
                     s.teamBattleTeams,
                     s.teamBattleLeaders,
                     s.daysInAdvance,
+                    s.msgMinutesBefore,
+                    s.msgTemplate,
+                    s.msgToken,
                 ),
             )
 
@@ -218,7 +235,10 @@ class Db:
                     scheduleEnd = ?,
                     teamBattleTeams = ?,
                     teamBattleLeaders = ?,
-                    daysInAdvance = ?
+                    daysInAdvance = ?,
+                    msgMinutesBefore = ?,
+                    msgTemplate = ?,
+                    msgToken = ?
                    WHERE id = ? and team = ?
                 """,
                 (
@@ -242,6 +262,9 @@ class Db:
                     s.teamBattleTeams,
                     s.teamBattleLeaders,
                     s.daysInAdvance,
+                    s.msgMinutesBefore,
+                    s.msgTemplate,
+                    s.msgToken,
                     s.id,
                     s.team,
                 ),
@@ -250,3 +273,90 @@ class Db:
     def delete_schedule(self, id: int) -> None:
         with self.db as conn:
             conn.execute("DELETE FROM schedules WHERE id = ?", (id,))
+
+    def insert_scheduled_msg(
+        self,
+        arenaId: str,
+        scheduleId: int,
+        team: str,
+        template: str,
+        token: str,
+        minutesBefore: int,
+        sendTime: int,
+    ) -> None:
+        with self.db as conn:
+            conn.execute(
+                "INSERT INTO scheduledMsgs (arenaId, scheduleId, team, template, token, minutesBefore, sendTime) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (arenaId, scheduleId, team, template, token, minutesBefore, sendTime),
+            )
+
+    def get_and_remove_scheduled_msgs(self) -> List[MsgToSend]:
+        now = int(time())
+        rows = self._query(
+            "SELECT arenaId, team, template, token FROM scheduledMsgs WHERE sendTime < ? AND sendTime > ?",
+            (now, now - 30 * 60),
+        )
+        msgs = [
+            MsgToSend(row["arenaId"], row["team"], row["template"], row["token"])
+            for row in rows
+        ]
+        with self.db as conn:
+            conn.execute("DELETE FROM scheduledMsgs WHERE sendTime < ?", (now,))
+        return msgs
+
+    def update_scheduled_msgs(self, schedule: ScheduleWithId) -> None:
+        with self.db as conn:
+            conn.execute(
+                "DELETE FROM scheduledMsgs WHERE scheduleId = ?", (schedule.id,)
+            )
+            if (
+                schedule.msgMinutesBefore
+                and schedule.msgMinutesBefore > 0
+                and schedule.msgTemplate
+                and schedule.msgToken
+            ):
+                conn.execute(
+                    """INSERT INTO scheduledMsgs (arenaId, scheduleId, team, template, token, sendTime) 
+                            SELECT id, scheduleId, team, ?, ?, time - ? FROM createdArenas WHERE scheduleId = ?
+                        """,
+                    (
+                        schedule.msgTemplate,
+                        schedule.msgToken,
+                        schedule.msgMinutesBefore,
+                        schedule.id,
+                    ),
+                )
+
+    def insert_bad_token(self, token: str, team: str) -> None:
+        with self.db as conn:
+            conn.execute(
+                "INSERT INTO badTokens (token, team) VALUES (?, ?)", (token, team)
+            )
+
+    def bad_tokens(self) -> Set[str]:
+        return set(
+            (row["token"], row["team"])
+            for row in self._query("SELECT token, team FROM badTokens")
+        )
+
+    def bad_tokens_for_team(self, team: str) -> List[str]:
+        return set(
+            row["token"]
+            for row in self._query(
+                "SELECT token FROM badTokens WHERE team = ?", (team,)
+            )
+        )
+
+    def replace_token_for_team(self, team: str, token: str) -> None:
+        bad_tokens = self.bad_tokens_for_team(team)
+        with self.db as conn:
+            for t in bad_tokens:
+                conn.execute(
+                    "UPDATE schedules SET msgToken = ? WHERE team = ? AND msgToken = ?",
+                    (token, team, t),
+                )
+                conn.execute(
+                    "UPDATE scheduledMsgs SET token = ? WHERE team = ? AND token = ?",
+                    (token, team, t),
+                )
+            conn.execute("DELETE FROM badTokens WHERE team = ?", (team,))

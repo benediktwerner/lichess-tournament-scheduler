@@ -13,7 +13,7 @@
     authorizationUrl: `${LICHESS_HOST}/oauth`,
     tokenUrl: `${LICHESS_HOST}/api/token`,
     clientId: 'tournament-scheduler',
-    scopes: ['tournament:write'],
+    scopes: ['tournament:write', 'team:write'],
     redirectUrl: baseUrl(),
     onAccessTokenExpiry: (refreshAccessToken) => refreshAccessToken(),
     onInvalidGrant: (_retry) => {},
@@ -56,7 +56,13 @@
       if (hasAuthCode) {
         accessContext = await oauth.getAccessToken();
         localStorage.setItem('token', JSON.stringify(accessContext));
+        localStorage.setItem('hasTeamScope', 'true');
         history.pushState(null, '', baseUrl());
+      } else if (
+        accessContext?.token &&
+        !localStorage.getItem('hasTeamScope')
+      ) {
+        await handleLogout();
       }
     } catch (err) {
       error = err;
@@ -87,10 +93,6 @@
 <style lang="scss">
   :global {
     @import './global.scss';
-  }
-
-  .error {
-    color: red;
   }
 
   .logout {

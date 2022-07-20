@@ -47,6 +47,9 @@
   let isTeamBattle = teamBattleTeams && teamBattleTeams.length > 0;
   let daysInAdvance = schedule?.daysInAdvance ?? 1;
   let updateCreated = false;
+  let msgEnabled = !!schedule?.msgMinutesBefore;
+  let msgMinutesBefore = schedule?.msgMinutesBefore ?? 60;
+  let msgTemplate = schedule?.msgTemplate ?? '';
 
   const handleSave = async () => {
     if (!form) return;
@@ -89,6 +92,8 @@
       teamBattleLeaders: isTeamBattle ? teamBattleLeaders : null,
       daysInAdvance,
       updateCreated,
+      msgMinutesBefore: msgEnabled ? msgMinutesBefore : null,
+      msgTemplate,
     };
 
     try {
@@ -128,13 +133,13 @@
     <tr>
       <td>Description:<br />(optional)</td>
       <td>
-        <textarea cols="30" rows="5" bind:value={description} />
-        <br />
         <small>
           Use <code>prev</code> and <code>next</code> as the "URL" in a markdown
           link to automatically link to the previous/next tournament of this
           series: <code>[Next tournament](next)</code>
         </small>
+        <br />
+        <textarea cols="50" rows="10" bind:value={description} />
       </td>
     </tr>
     <tr>
@@ -323,7 +328,7 @@
         <td>Teams:</td>
         <td>
           <small>(one per line, first part must be the team id)</small><br />
-          <textarea cols="30" rows="5" bind:value={teamBattleTeams} required />
+          <textarea cols="50" rows="10" bind:value={teamBattleTeams} required />
         </td>
       </tr>
       <tr>
@@ -345,6 +350,35 @@
         <td>Update already <br /> created tournaments:</td>
         <td>
           <input type="checkbox" bind:checked={updateCreated} />
+        </td>
+      </tr>
+    {/if}
+    <tr>
+      <td> Message: </td>
+      <td>
+        <input type="checkbox" bind:checked={msgEnabled} />
+        <small>
+          (send reminder team message before the tournament starts)
+        </small>
+      </td>
+    </tr>
+    {#if msgEnabled}
+      <tr>
+        <td />
+        <td>
+          <br />
+          <input type="number" bind:value={msgMinutesBefore} min="10" required />
+          minutes before start
+          <br />
+          <br />
+          <small>
+            Use <code>{'{link}'}</code> to insert a link to the tournament
+            <br />
+            The message will be sent from the account currently logged in on this
+            site
+          </small>
+          <br />
+          <textarea cols="60" rows="10" bind:value={msgTemplate} required />
         </td>
       </tr>
     {/if}

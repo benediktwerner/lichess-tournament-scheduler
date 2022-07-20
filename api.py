@@ -9,7 +9,7 @@ import re
 import requests
 
 from db import Schedule
-from model import ArenaEdit
+from model import ArenaEdit, MsgToSend
 
 HOST = "https://lichess.org"  # overridden from config in app.py
 ARENA_URL = "/tournament/{}"
@@ -21,6 +21,7 @@ ENDPOINT_GET_ARENA = "/api/tournament/{}"
 ENDPOINT_UPDATE_ARENA = "/api/tournament/{}"
 ENDPOINT_TERMINATE_ARENA = "/api/tournament/{}/terminate"
 ENDPOINT_TEAM_BATTLE = "/api/tournament/team-battle/{}"
+ENDPOINT_TEAM_PM = "/team/{}/pm-all"
 BOOL = ["false", "true"]
 
 
@@ -29,6 +30,18 @@ class Token:
     userId: str
     expires: int
     scopes: List[str]
+
+    @property
+    def allows_tournaments(self) -> bool:
+        return "tournament:write" in self.scopes
+
+    @property
+    def allows_teams(self) -> bool:
+        return "team:write" in self.scopes
+
+    @property
+    def expired(self) -> bool:
+        return self.expires < time() - 24 * 60 * 60
 
 
 @dataclass(frozen=True)
@@ -158,7 +171,7 @@ def update_arena(
         "streakable": BOOL[arena.streakable],
     }
     if arena.startsAt:
-        data["startDate"] = arena.startsAt
+        data["startDate"] = arena.startsAt * 1000
     if arena.position:
         data["position"] = arena.position
     if arena.description:
@@ -222,4 +235,12 @@ def update_link_to_next_arena(id: str, nxt: str, api_key: str) -> None:
         HOST + ENDPOINT_UPDATE_ARENA.format(id),
         headers={"Authorization": f"Bearer {api_key}"},
         data=data,
+    ).raise_for_status()
+
+
+def send_team_msg(msg: MsgToSend) -> None:
+    requests.post(
+        HOST + ENDPOINT_TEAM_PM.format(msg.team),
+        headers={"Authorization": f"Bearer {msg.token}"},
+        data={"message": msg.text()},
     ).raise_for_status()

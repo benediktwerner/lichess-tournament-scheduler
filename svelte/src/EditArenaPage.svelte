@@ -44,7 +44,7 @@
       id: arena.id,
       team,
       name,
-      startsAt: startTime ? +new Date(startTime + "Z") : undefined,
+      startsAt: startTime ? Math.round(+new Date(startTime + "Z") / 1000) : undefined,
       description: description || null,
       clock,
       increment,

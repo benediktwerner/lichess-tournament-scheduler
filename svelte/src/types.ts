@@ -21,6 +21,8 @@ export interface Schedule {
   teamBattleTeams?: string;
   teamBattleLeaders?: number;
   daysInAdvance?: number;
+  msgMinutesBefore?: number;
+  msgTemplate?: string;
 }
 
 export type Schedules = [string, Schedule[]][] | null;

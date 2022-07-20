@@ -19,7 +19,7 @@ def token_test() -> str:
             token: {
                 "userId": "benwerner",
                 "expires": int(time() * 1000) + 60 * 60 * 1000,
-                "scopes": "tournament:write",
+                "scopes": "tournament:write,team:write",
             }
         }
     )

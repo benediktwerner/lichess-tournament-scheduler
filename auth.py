@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 class User:
     is_admin: bool
     teams: List[str]
+    token: str
 
     def assert_for_team(self, team: str) -> None:
         if not self.is_admin and team not in self.teams:
@@ -35,14 +36,6 @@ class User:
     def assert_leader_or_admin(self) -> None:
         if not self.is_admin and not self.teams:
             abort(403)
-
-    @staticmethod
-    def plain(teams: List[str]) -> User:
-        return User(False, teams)
-
-    @staticmethod
-    def admin() -> User:
-        return User(True, [])
 
 
 @dataclass
@@ -97,16 +90,19 @@ class Auth:
 
         try:
             res = api.verify_token(token)
-            if not res or "tournament:write" not in res.scopes or res.expires < time():
+            if (
+                not res
+                or res.expired
+                or not res.allows_teams
+                or not res.allows_tournaments
+            ):
                 abort(403)
 
-            if res.userId in self.admins:
-                user = User.admin()
-            else:
-                teams = [
-                    team for team in api.leader_teams(res.userId) if team in self.teams
-                ]
-                user = User.plain(teams)
+            teams = [
+                team for team in api.leader_teams(res.userId) if team in self.teams
+            ]
+            admin = res.userId in self.admins
+            user = User(admin, teams, token)
             self.add_cache(token, user)
             user.assert_leader_or_admin()
             return user

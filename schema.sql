@@ -20,7 +20,10 @@ CREATE TABLE schedules (
     minGames INT,
     teamBattleTeams TEXT,
     teamBattleLeaders INT,
-    daysInAdvance INT
+    daysInAdvance INT,
+    msgMinutesBefore INT,
+    msgTemplate TEXT,
+    msgToken TEXT
 );
 
 CREATE TABLE createdArenas (
@@ -28,4 +31,19 @@ CREATE TABLE createdArenas (
     scheduleId INT NOT NULL,
     team TEXT NOT NULL,
     time INT NOT NULL
+);
+
+CREATE TABLE scheduledMsgs (
+    arenaId TEXT NOT NULL,
+    scheduleId INT NOT NULL,
+    team TEXT NOT NULL,
+    template TEXT NOT NULL,
+    token TEXT NOT NULL,
+    minutesBefore INT NOT NULL,
+    sendTime INT NOT NULL
+);
+
+CREATE TABLE badTokens (
+    token TEXT NOT NULL,
+    team TEXT NOT NULL
 );

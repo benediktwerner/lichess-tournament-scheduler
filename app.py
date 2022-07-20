@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any
-from time import time
 from collections import defaultdict
+from time import time
+from typing import Any
 
 from flask import Flask, abort, jsonify, request
+from flask.logging import default_handler
 from flask_cors import CORS
 from werkzeug.exceptions import HTTPException
 
@@ -20,6 +21,9 @@ from scheduler import SchedulerThread
 
 OK_RESPONSE = '{"ok":true}'
 API_VERSION = "2"
+
+root = logging.getLogger()
+root.addHandler(default_handler)
 
 app = Flask(__name__)
 app.config.from_pyfile("config.py")
@@ -33,6 +37,7 @@ try:
     def create_tables() -> None:
         with Db() as db:
             db.create_tables(app)
+
     create_tables()
 
     auth = Auth(app)
@@ -72,6 +77,32 @@ def schedules() -> Any:
         return jsonify([(team, by_team[team]) for team in teams])
 
 
+@app.route("/badTokens")
+def badTokens() -> Any:
+    user = auth()
+    teams = []
+    with Db() as db:
+        for team in user.teams:
+            if db.bad_tokens_for_team(team):
+                teams.append(team)
+    return jsonify(teams)
+
+
+@app.route("/replaceToken/<team>")
+def replaceToken(team: str) -> Any:
+    user = auth()
+    user.assert_for_team(team)
+
+    if team not in user.teams:
+        abort(
+            400,
+            description="You aren't a member of this team so you can't schedule messages for it",
+        )
+
+    with Db() as db:
+        db.replace_token_for_team(team, user.token)
+
+
 @app.route("/createdUpcomingIds")
 def createdUpcomingIds() -> Any:
     auth()
@@ -84,15 +115,23 @@ def createdUpcomingIds() -> Any:
 
 @app.route("/create", methods=["POST"])
 def create() -> str:
+    user = auth()
+
     try:
         j = request.json
         if not j:
             abort(400)
-        schedule = Schedule.from_json(j)
+        schedule = Schedule.from_json(j, user.token)
     except ParseError as e:
         abort(400, description=str(e))
 
-    auth().assert_for_team(schedule.team)
+    user.assert_for_team(schedule.team)
+
+    if schedule.msgMinutesBefore and schedule.team not in user.teams:
+        abort(
+            400,
+            description="You aren't a member of this team so you can't schedule messages for it",
+        )
 
     with Db() as db:
         db.insert_schedule(schedule)
@@ -102,22 +141,31 @@ def create() -> str:
 
 @app.route("/edit", methods=["POST"])
 def edit() -> str:
+    user = auth()
+
     try:
         j = request.json
         if not j:
             abort(400)
-        schedule = ScheduleWithId.from_json(j)
+        schedule = ScheduleWithId.from_json(j, user.token)
         update_created = get_or_raise(j, "updateCreated", bool)
     except ParseError as e:
         abort(400, description=str(e))
 
-    auth().assert_for_team(schedule.team)
+    user.assert_for_team(schedule.team)
+    if schedule.msgMinutesBefore and schedule.team not in user.teams:
+        abort(
+            400,
+            description="You aren't a member of this team so you can't schedule messages for it",
+        )
 
     with Db() as db:
         db.update_schedule(schedule)
 
         if not update_created:
             return OK_RESPONSE
+
+        db.update_scheduled_msgs(schedule)
 
         teams = schedule.team_battle_teams()
         leaders = schedule.teamBattleLeaders
@@ -175,6 +223,10 @@ def editArena() -> str:
     err = api.update_arena(arena, prev, nxt, app.config["LICHESS_API_KEY"])
     if err is not None:
         abort(500, description=f"Failed to edit tournament: {err}")
+
+    if arena.startsAt is not None:
+        with Db() as db:
+            db.update_created(arena)
 
     if arena.isTeamBattle:
         try:
