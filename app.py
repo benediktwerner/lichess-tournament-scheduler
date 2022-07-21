@@ -20,7 +20,7 @@ from model import ArenaEdit, ParseError, Schedule, ScheduleWithId, get_or_raise
 from scheduler import SchedulerThread
 
 OK_RESPONSE = '{"ok":true}'
-API_VERSION = "3"
+API_VERSION = "4"
 
 root = logging.getLogger()
 root.addHandler(default_handler)
