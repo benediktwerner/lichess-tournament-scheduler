@@ -72,7 +72,7 @@ class SchedulerThread(Thread):
                 if prev and s.description and "](next)" in s.description:
                     logger.info(f"Adding link to: {prev}")
                     api.update_link_to_next_arena(
-                        prev, prev2, id, s.description, self.api_key
+                        prev, prev2, id, s.description, nth - 1, self.api_key
                     )
                     sleep(10)
 

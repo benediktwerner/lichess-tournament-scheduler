@@ -350,7 +350,7 @@ class Db:
             if minsBefore and minsBefore > 0 and template:
                 conn.execute(
                     """INSERT INTO scheduledMsgs (arenaId, scheduleId, team, template, token, minutesBefore, sendTime)
-                            VALUES (?, ?, ?, ?, ?, ?)
+                            VALUES (?, ?, ?, ?, ?, ?, ?)
                             """,
                     (
                         arena.id,
