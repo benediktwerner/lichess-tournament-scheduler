@@ -77,6 +77,18 @@ def schedules() -> Any:
         return jsonify([(team, by_team[team]) for team in teams])
 
 
+@app.route("/scheduledMsg/<id>")
+def scheduledMsg(id: str) -> Any:
+    user = auth()
+    with Db() as db:
+        msg = db.scheduled_msg(id)
+    if not msg:
+        return jsonify({})
+    minsBefore, template, team = msg
+    user.assert_for_team(team)
+    return jsonify({"msgMinutesBefore": minsBefore, "msgTemplate": template})
+
+
 @app.route("/badTokens")
 def badTokens() -> Any:
     user = auth()
@@ -201,6 +213,7 @@ def edit() -> str:
 
 @app.route("/editArena", methods=["POST"])
 def editArena() -> str:
+    user = auth()
     try:
         j = request.json
         if not j:
@@ -209,26 +222,33 @@ def editArena() -> str:
     except ParseError as e:
         abort(400, description=str(e))
 
-    auth().assert_for_team(arena.team)
+    user.assert_for_team(arena.team)
+
+    if arena.msgMinutesBefore and arena.team not in user.teams:
+        abort(
+            400,
+            description="You aren't a member of this team so you can't schedule messages for it",
+        )
 
     with Db() as db:
-        team = db.team_of_created(arena.id)
-
-        if team is None or team != arena.team:
+        old = db.created(arena.id)
+        if old is None or old.team != arena.team:
             abort(
                 404,
                 description="This tournament either doesn't exist or wasn't created by the scheduler",
             )
 
-        prev, nxt = db.prev_nxt_of_created(arena.id)
-
-    err = api.update_arena(arena, prev, nxt, 0, app.config["LICHESS_API_KEY"])
+    err = api.update_arena(arena, None, None, 0, app.config["LICHESS_API_KEY"])
     if err is not None:
         abort(500, description=f"Failed to edit tournament: {err}")
 
-    if arena.startsAt is not None:
-        with Db() as db:
-            db.update_created(arena)
+    with Db() as db:
+        if arena.startsAt:
+            old.time = arena.startsAt
+        db.update_created(old)
+        db.update_scheduled_msg(
+            old, arena.msgMinutesBefore, arena.msgTemplate, user.token
+        )
 
     if arena.isTeamBattle:
         try:
@@ -263,13 +283,13 @@ def delete(id: int) -> str:
 @app.route("/cancel/<id>", methods=["POST"])
 def cancel(id: str) -> str:
     with Db() as db:
-        team = db.team_of_created(id)
-        if team is None:
+        arena = db.created(id)
+        if arena is None:
             abort(
                 404,
                 description="This tournament either doesn't exist or wasn't created by the scheduler",
             )
-        auth().assert_for_team(team)
+        auth().assert_for_team(arena.team)
         try:
             api.terminate_arena(id, app.config["LICHESS_API_KEY"])
         except Exception as e:

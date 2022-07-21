@@ -7,7 +7,7 @@ from typing import Any, List, Optional, Set, Tuple
 
 from flask import Flask
 
-from model import ArenaEdit, MsgToSend, Schedule, ScheduleWithId
+from model import ArenaEdit, CreatedArena, MsgToSend, Schedule, ScheduleWithId
 
 DATABASE = "database.sqlite"
 VERSION = 8
@@ -85,14 +85,10 @@ class Db:
                 (id, schedule_id, team, t),
             )
 
-    def update_created(self, arena: ArenaEdit) -> None:
+    def update_created(self, arena: CreatedArena) -> None:
         with self.db as conn:
             conn.execute(
                 "UPDATE createdArenas SET time = ? WHERE id = ?",
-                (arena.startsAt, arena.id),
-            )
-            conn.execute(
-                "UPDATE scheduledMsgs SET sendTime = ? - (60 * minutesBefore) WHERE arenaId = ?",
                 (arena.startsAt, arena.id),
             )
 
@@ -100,10 +96,12 @@ class Db:
         with self.db as conn:
             conn.execute("DELETE FROM createdArenas WHERE id = ?", (id,))
 
-    def team_of_created(self, id: str) -> Optional[str]:
-        a = self._query_one("SELECT team FROM createdArenas WHERE id = ?", (id,))
-        if a:
-            return str(a["team"])
+    def created(self, id: str) -> Optional[CreatedArena]:
+        row = self._query_one(
+            "SELECT id, scheduleId, team, time FROM createdArenas WHERE id = ?", (id,)
+        )
+        if row:
+            return CreatedArena.from_row(row)
         return None
 
     def created_upcoming(self) -> List[Tuple[str, str]]:
@@ -155,27 +153,9 @@ class Db:
             return prevs[0], None
         return prevs[0], prevs[1]
 
-
-    def prev_nxt_of_created(self, id: str) -> Tuple[Optional[str], Optional[str]]:
-        result = self._query_one(
-            "SELECT scheduleId, time FROM createdArenas WHERE id = ?",
-            (id,),
-        )
-        if not result:
-            return (None, None)
-        prev = self._query_one(
-            "SELECT id FROM createdArenas WHERE scheduleId = ? and time < ? ORDER BY time DESC LIMIT 1",
-            (result["scheduleId"], result["time"]),
-        )
-        nxt = self._query_one(
-            "SELECT id FROM createdArenas WHERE scheduleId = ? and time > ? ORDER BY time DESC LIMIT 1",
-            (result["scheduleId"], result["time"]),
-        )
-        return (prev["id"] if prev else None, nxt["id"] if nxt else None)
-
     def schedules(self) -> List[ScheduleWithId]:
         return [
-            ScheduleWithId._from_row(x) for x in self._query(f"SELECT * FROM schedules")
+            ScheduleWithId.from_row(x) for x in self._query(f"SELECT * FROM schedules")
         ]
 
     def team_of_schedule(self, id: int) -> Optional[str]:
@@ -346,16 +326,51 @@ class Db:
                 and schedule.msgToken
             ):
                 conn.execute(
-                    """INSERT INTO scheduledMsgs (arenaId, scheduleId, team, template, token, sendTime) 
-                            SELECT id, scheduleId, team, ?, ?, time - ? FROM createdArenas WHERE scheduleId = ?
+                    """INSERT INTO scheduledMsgs (arenaId, scheduleId, team, template, token, minutesBefore, sendTime) 
+                            SELECT id, scheduleId, team, ?, ?, ?, time - ? FROM createdArenas WHERE scheduleId = ?
                         """,
                     (
                         schedule.msgTemplate,
                         schedule.msgToken,
                         schedule.msgMinutesBefore,
+                        schedule.msgMinutesBefore,
                         schedule.id,
                     ),
                 )
+
+    def update_scheduled_msg(
+        self,
+        arena: CreatedArena,
+        minsBefore: Optional[int],
+        template: Optional[str],
+        token: str,
+    ) -> None:
+        with self.db as conn:
+            conn.execute("DELETE FROM scheduledMsgs WHERE arenaId = ?", (arena.id,))
+            if minsBefore and minsBefore > 0 and template:
+                conn.execute(
+                    """INSERT INTO scheduledMsgs (arenaId, scheduleId, team, template, token, minutesBefore, sendTime)
+                            VALUES (?, ?, ?, ?, ?, ?)
+                            """,
+                    (
+                        arena.id,
+                        arena.scheduleId,
+                        arena.team,
+                        template,
+                        token,
+                        minsBefore,
+                        arena.time - minsBefore * 60,
+                    ),
+                )
+
+    def scheduled_msg(self, arenaId: str) -> Optional[Tuple[int, str, str]]:
+        row = self._query_one(
+            "SELECT minutesBefore, template, team FROM scheduledMsgs WHERE arenaId = ?",
+            (arenaId,),
+        )
+        if row:
+            return (row["minutesBefore"], row["template"], row["team"])
+        return None
 
     def insert_bad_token(self, token: str, team: str) -> None:
         with self.db as conn:

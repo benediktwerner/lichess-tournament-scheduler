@@ -173,7 +173,7 @@ class ScheduleWithId(Schedule):
     id: int
 
     @staticmethod
-    def _from_row(row: sqlite3.Row) -> ScheduleWithId:
+    def from_row(row: sqlite3.Row) -> ScheduleWithId:
         s = ScheduleWithId(**row)  # type: ignore
         s.rated = bool(s.rated)
         s.berserkable = bool(s.berserkable)
@@ -233,6 +233,8 @@ class ArenaEdit:
     isTeamBattle: bool
     teamBattleTeams: Optional[str]
     teamBattleLeaders: Optional[int]
+    msgMinutesBefore: Optional[int]
+    msgTemplate: Optional[str]
 
     def team_battle_teams(self) -> List[str]:
         return extract_team_battle_teams(self.team, self.teamBattleTeams)
@@ -259,6 +261,8 @@ class ArenaEdit:
             s.is_team_battle,
             s.teamBattleTeams,
             s.teamBattleLeaders,
+            None,
+            None,
         )
 
     @staticmethod
@@ -283,7 +287,21 @@ class ArenaEdit:
             get_or_raise(j, "isTeamBattle", bool),
             get_opt_or_raise(j, "teamBattleTeams", str),
             get_opt_or_raise(j, "teamBattleLeaders", int),
+            get_opt_or_raise(j, "msgMinutesBefore", int),
+            get_opt_or_raise(j, "msgTemplate", str),
         )
+
+
+@dataclass
+class CreatedArena:
+    id: str
+    scheduleId: int
+    team: str
+    time: int
+
+    @staticmethod
+    def from_row(row: sqlite3.Row) -> ScheduleWithId:
+        return CreatedArena(**row)  # type: ignore
 
 
 class ParseError(Exception):

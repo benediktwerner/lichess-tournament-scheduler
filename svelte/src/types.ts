@@ -81,6 +81,8 @@ export interface ApiArena extends ArenaBase {
     };
     nbLeaders: number;
   };
+  msgMinutesBefore?: number;
+  msgTemplate?: string;
 }
 
 export interface ArenaEdit {
@@ -103,4 +105,6 @@ export interface ArenaEdit {
   isTeamBattle: boolean;
   teamBattleTeams?: string;
   teamBattleLeaders?: number;
+  msgMinutesBefore?: number;
+  msgTemplate?: string;
 }

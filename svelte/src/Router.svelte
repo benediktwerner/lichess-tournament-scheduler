@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { LICHESS_HOST } from './config';
+  import App from './App.svelte';
+  import { API_HOST, LICHESS_HOST } from './config';
 
   import EditArenaPage from './EditArenaPage.svelte';
 
@@ -56,7 +57,14 @@
         alert(`Error while fetching tournament info: ${await resp.text()}`);
         return;
       }
-      editArena = await resp.json();
+      const resp2 = await fetch(API_HOST + '/scheduledMsg/' + id, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!resp2.ok) {
+        alert(`Error while fetching scheduled msg: ${await resp.text()}`);
+        return;
+      }
+      editArena = { ...(await resp.json()), ...(await resp2.json()) };
       team = t;
       page = Page.ArenaEdit;
     }}

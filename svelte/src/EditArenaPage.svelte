@@ -32,6 +32,9 @@
     .map(([key, name]) => `${key} "${name}"`)
     .join('\n');
   let teamBattleLeaders = arena.teamBattle?.nbLeaders;
+  let msgEnabled = !!arena?.msgMinutesBefore;
+  let msgMinutesBefore = arena?.msgMinutesBefore ?? 60;
+  let msgTemplate = arena?.msgTemplate ?? '';
 
   const handleSave = async () => {
     if (!form) return;
@@ -44,7 +47,9 @@
       id: arena.id,
       team,
       name,
-      startsAt: startTime ? Math.round(+new Date(startTime + "Z") / 1000) : undefined,
+      startsAt: startTime
+        ? Math.round(+new Date(startTime + 'Z') / 1000)
+        : undefined,
       description: description || null,
       clock,
       increment,
@@ -60,6 +65,8 @@
       isTeamBattle,
       teamBattleTeams: isTeamBattle ? teamBattleTeams : null,
       teamBattleLeaders: isTeamBattle ? teamBattleLeaders : null,
+      msgMinutesBefore: msgEnabled ? msgMinutesBefore : null,
+      msgTemplate,
     };
 
     try {
@@ -94,10 +101,6 @@
       <td>
         <input type="text" bind:value={name} required />
         {isTeamBattle ? 'Team Battle' : 'Arena'}
-        <small>
-          (unless you also update or pause the schedule, another tournament with
-          the old name will be created when you change the name)
-        </small>
       </td>
     </tr>
     <tr>
@@ -232,6 +235,39 @@
             bind:value={teamBattleLeaders}
             required
           />
+        </td>
+      </tr>
+    {/if}
+    <tr>
+      <td> Message: </td>
+      <td>
+        <input type="checkbox" bind:checked={msgEnabled} />
+        <small>
+          (send reminder team message before the tournament starts)
+        </small>
+      </td>
+    </tr>
+    {#if msgEnabled}
+      <tr>
+        <td />
+        <td>
+          <input
+            type="number"
+            bind:value={msgMinutesBefore}
+            min="10"
+            required
+          />
+          minutes before start
+          <br />
+          <br />
+          <textarea cols="60" rows="10" bind:value={msgTemplate} required />
+          <br />
+          <small>
+            Use <code>{'{link}'}</code> to insert a link to the tournament.
+            <br />
+            The message will be sent from the account currently logged in on this
+            site.
+          </small>
         </td>
       </tr>
     {/if}
