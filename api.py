@@ -249,11 +249,11 @@ def format_description(
     if prev:
         desc = desc.replace("](prev)", f"]({HOST + ARENA_URL.format(prev)})")
     else:
-        desc = re.sub(r"\[.*?\]\(prev\)", "", desc)
+        desc = re.sub(r"\[[^\n\[\]]+\]\(prev\)", "", desc)
     if nxt:
         desc = desc.replace("](next)", f"]({HOST + ARENA_URL.format(nxt)})")
     else:
-        desc = re.sub(r"\[(.*?)\]\(next\)", r"\1", desc)
+        desc = re.sub(r"\[([^\n\[\]]+)\]\(next\)", r"\1", desc)
     date = datetime.utcfromtimestamp(at)
     desc = desc.replace("{month}", f"{date:%B}")
     desc = desc.replace("{n}", str(nth))
