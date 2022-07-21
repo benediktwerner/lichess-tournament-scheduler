@@ -1,7 +1,8 @@
+export const API_HOST = 'http://localhost:5000';
+
 export const LICHESS_HOST = IS_PRODUCTION
   ? 'https://lichess.org'
   : 'http://localhost:9663';
-export const API_HOST = 'http://localhost:5000';
 export const API_VERSION = 3;
 
 export const VARIANT_NAMES = {
