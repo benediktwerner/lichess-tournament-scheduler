@@ -80,8 +80,18 @@ class Schedule:
                 raise ParseError(f"Invalid weekday: {scheduleDay % 10}")
             if scheduleDay % 100 // 10 > 4:
                 raise ParseError(f"Invalid weekday ordinal: {scheduleDay}")
-        name = get_or_raise(j, "name", str),
-        long_name = re.sub(r"{n\+\d+}", "42", re.sub(r"{nth\+\d+}", "42nd", name.replace("{n}", "42").replace("{nth}", "42nd").replace("{month}", "Jan.")))
+        name = get_or_raise(j, "name", str)
+        long_name = re.sub(
+            r"{n\+\d+}",
+            "42",
+            re.sub(
+                r"{nth\+\d+}",
+                "42nd",
+                name.replace("{n}", "42")
+                .replace("{nth}", "42nd")
+                .replace("{month}", "Jan."),
+            ),
+        )
         if len(long_name) > 30:
             raise ParseError("The tournament is longer than 30 characters")
         return Schedule(
