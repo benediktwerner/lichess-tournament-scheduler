@@ -48,9 +48,9 @@ class SchedulerThread(Thread):
                 else:
                     nth = 0
                 prev, prev2 = db.previous_two_created(s.id, nxt)
-                id = api.schedule_arena(s, nxt, self.api_key, nth, prev)
+                id, name = api.schedule_arena(s, nxt, self.api_key, nth, prev)
                 db.insert_created(id, s.id, s.team, nxt)
-                logger.info(f"Created {s.name} as {id}")
+                logger.info(f"Created {name or s.name} as {id}")
 
                 if (
                     s.msgMinutesBefore

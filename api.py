@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 from time import time
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import requests
 
@@ -76,7 +76,7 @@ def leader_teams(userId: str) -> List[str]:
 
 def schedule_arena(
     s: Schedule, at: int, api_key: str, nth: int, prev: Optional[str]
-) -> str:
+) -> Tuple[str, Optional[str]]:
     name = format_name(s.name, at, nth)
     data = {
         "name": name,
@@ -112,7 +112,8 @@ def schedule_arena(
         data=data,
     )
     resp.raise_for_status()
-    id = resp.json().get("id")
+    json = resp.json()
+    id = json.get("id")
     if not isinstance(id, str):
         raise Exception(f"Created arena has invalid id: {id}")
 
@@ -126,7 +127,7 @@ def schedule_arena(
         )
         resp.raise_for_status()
 
-    return id
+    return id, json.get("fullName")
 
 
 def update_team_battle(
