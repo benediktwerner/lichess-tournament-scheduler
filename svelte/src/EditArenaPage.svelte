@@ -100,7 +100,7 @@
     <tr>
       <td>Name:</td>
       <td>
-        <input type="text" bind:value={name} required />
+        <input type="text" bind:value={name} maxlength="30" required />
         {isTeamBattle ? 'Team Battle' : 'Arena'}
       </td>
     </tr>
