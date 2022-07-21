@@ -89,7 +89,7 @@ class Db:
         with self.db as conn:
             conn.execute(
                 "UPDATE createdArenas SET time = ? WHERE id = ?",
-                (arena.startsAt, arena.id),
+                (arena.time, arena.id),
             )
 
     def delete_created(self, id: str) -> None:
