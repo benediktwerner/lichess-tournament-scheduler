@@ -52,6 +52,10 @@ class Schedule:
     def days_in_advance(self) -> int:
         return self.daysInAdvance or 1
 
+    def clean_token(self) -> Schedule:
+        self.msgToken = None
+        return self
+
     def team_battle_teams(self) -> List[str]:
         return extract_team_battle_teams(self.team, self.teamBattleTeams)
 

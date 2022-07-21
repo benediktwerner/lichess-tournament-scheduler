@@ -72,7 +72,7 @@ def schedules() -> Any:
     with Db() as db:
         by_team = defaultdict(list)
         for s in db.schedules():
-            by_team[s.team].append(s)
+            by_team[s.team].append(s.clean_token())
         teams = app.config["TEAMS_WHITELIST"] if user.is_admin else user.teams
         return jsonify([(team, by_team[team]) for team in teams])
 
