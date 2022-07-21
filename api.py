@@ -232,10 +232,14 @@ def send_team_msg(msg: MsgToSend) -> None:
 
 def format_name(name: str, at: int, nth: int) -> str:
     date = datetime.utcfromtimestamp(at)
-    name = name.replace("{month}", f"{date:%B}")
-    name = name.replace("{nth}", str(nth))
-    name = re.sub(r"{nth\+(\d+)}", lambda m: str(nth + int(m.group(1))), name)
-    return name
+    name = name.replace("{n}", str(nth))
+    name = name.replace("{nth}", format_nth(nth))
+    name = re.sub(r"{n\+(\d+)}", lambda m: str(nth + int(m.group(1))), name)
+    name = re.sub(r"{nth\+(\d+)}", lambda m: format_nth(nth + int(m.group(1))), name)
+    name_long = name.replace("{month}", f"{date:%B}")
+    if len(name_long) <= 30:
+        return name_long
+    return name.replace("{month}", f"{date:%b}.")
 
 
 def format_description(
@@ -246,13 +250,25 @@ def format_description(
     else:
         desc = re.sub(r"\[.*?\]\(prev\)", "", desc)
     if nxt:
-        nxt_url = HOST + ARENA_URL.format(nxt)
-        desc = desc.replace("](next)", f"]({nxt_url})")
+        desc = desc.replace("](next)", f"]({HOST + ARENA_URL.format(nxt)})")
     else:
         desc = re.sub(r"\[(.*?)\]\(next\)", r"\1", desc)
     date = datetime.utcfromtimestamp(at)
     desc = desc.replace("{month}", f"{date:%B}")
-    desc = desc.replace("{nth}", str(nth))
-    desc = re.sub(r"{nth\+(\d+)}", lambda m: str(nth + int(m.group(1))), desc)
+    desc = desc.replace("{n}", str(nth))
+    desc = desc.replace("{nth}", format_nth(nth))
+    desc = re.sub(r"{n\+(\d+)}", lambda m: str(nth + int(m.group(1))), desc)
+    desc = re.sub(r"{nth\+(\d+)}", lambda m: format_nth(nth + int(m.group(1))), desc)
     desc = desc.replace("{name}", name)
     return desc
+
+
+def format_nth(n: int) -> str:
+    m = n % 10
+    if m == 1:
+        return f"{n}st"
+    if m == 2:
+        return f"{n}nd"
+    if m == 3:
+        return f"{n}rd"
+    return f"{n}th"

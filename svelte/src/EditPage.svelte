@@ -137,9 +137,11 @@
           Use <code>{'{month}'}</code> to insert the month in which the arena
           takes place.
           <br />
-          Use <code>{'{nth}'}</code> to insert the number this tournament has in
-          the series. Use <code>{'{nth+5}'}</code> if there have already been 5 previous
-          tournaments created via other means.
+          Use <code>{'{n}'}</code> to insert the number this tournament has in
+          the series. Use <code>{'{nth}'}</code> to insert it as an ordinal i.e.
+          including the `rd` in `3rd`. Use <code>{'{n+5}'}</code> and
+          <code>{'{nth+5}'}</code> if there have already been 5 previous tournaments
+          created via other means.
         </small>
       </td>
     </tr>
@@ -154,7 +156,7 @@
           series: <code>[Next tournament](next)</code>
           <br />
           Use <code>{'{name}'}</code> to insert the name of the tournament. You
-          can also use <code>{'{month}'}</code> and <code>{'{nth}'}</code> as above.
+          can also use <code>{'{month}'}</code>, <code>{'{n}'}</code>, and <code>{'{nth}'}</code> as above.
         </small>
       </td>
     </tr>
