@@ -1,5 +1,4 @@
 <script lang="ts">
-  import App from './App.svelte';
   import { API_HOST, LICHESS_HOST } from './config';
 
   import EditArenaPage from './EditArenaPage.svelte';

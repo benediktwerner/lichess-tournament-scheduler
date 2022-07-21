@@ -1,10 +1,4 @@
-export const API_HOST = 'http://localhost:5000';
-
-export const LICHESS_HOST = IS_PRODUCTION
-  ? 'https://lichess.org'
-  : 'http://localhost:9663';
 export const API_VERSION = 4;
-
 export const VARIANT_NAMES = {
   standard: 'Standard',
   chess960: 'Chess960',
@@ -16,18 +10,6 @@ export const VARIANT_NAMES = {
   racingKings: 'Racing Kings',
   threeCheck: 'Three Check',
 };
-
-export const DEFAULT_VARIANT = {
-  'lichess-chess960': 'chess960',
-  'lichess-crazyhouse': 'crazyhouse',
-  'lichess-antichess': 'antichess',
-  'lichess-atomic': 'atomic',
-  'lichess-horde': 'horde',
-  'lichess-king-of-hill': 'kingOfTheHill',
-  'lichess-racing-kings': 'racingKings',
-  'lichess-three-check': 'threeCheck',
-};
-
 export const SCHEDULE_NAMES = [
   'Every day',
   'Monday',

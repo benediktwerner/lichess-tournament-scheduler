@@ -1,6 +1,7 @@
 <script lang="ts">
   import { OAuth2AuthCodePKCE } from '@bity/oauth2-auth-code-pkce';
-  import { API_HOST, API_VERSION, LICHESS_HOST } from './config';
+  import { API_HOST, LICHESS_HOST } from './config';
+  import { API_VERSION } from './consts';
   import Router from './Router.svelte';
 
   const baseUrl = () => {
@@ -59,9 +60,7 @@
         localStorage.setItem('hasTeamScope', 'true');
         history.pushState(null, '', baseUrl());
         forceLogout = false;
-      } else if (
-        accessContext?.token && forceLogout
-      ) {
+      } else if (accessContext?.token && forceLogout) {
         await handleLogout();
         forceLogout = false;
       }

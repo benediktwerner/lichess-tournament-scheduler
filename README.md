@@ -9,7 +9,8 @@
 
 1. `cd svelte`
 2. `npm install`
-3. Create production build: `npm run build`. Output is in `svelte/public`
+3. Copy `src/config.example.ts` to `src/config.ts` and fill out the values
+4. Create production build: `npm run build`. Output is in `svelte/public`
 
 ## Dev
 

@@ -1,11 +1,6 @@
 <script lang="ts">
   import type { Schedule, Schedules, TeamArena } from './types';
-  import {
-    API_HOST,
-    LICHESS_HOST,
-    SCHEDULE_NAMES,
-    VARIANT_NAMES,
-  } from './config';
+  import { API_HOST, LICHESS_HOST } from './config';
   import {
     formatDate,
     formatDuration,
@@ -14,6 +9,7 @@
     formatUntil,
     sleep,
   } from './utils';
+  import { SCHEDULE_NAMES, VARIANT_NAMES } from './consts';
 
   export let token: string;
   export let gotoCreateSchedule: (team: string) => void;

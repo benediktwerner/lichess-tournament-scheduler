@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { API_HOST, VARIANT_NAMES } from './config';
+  import { API_HOST } from './config';
+  import { VARIANT_NAMES } from './consts';
 
   import type { ApiArena, ArenaEdit } from './types';
 

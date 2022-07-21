@@ -4,3 +4,5 @@ config.py
 *.sqlite
 node_modules
 svelte/public/build
+svelte/src/config.ts
+svelte/package-lock.json

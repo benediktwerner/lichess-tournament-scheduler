@@ -1,10 +1,6 @@
 <script lang="ts">
-  import {
-    API_HOST,
-    DEFAULT_VARIANT,
-    SCHEDULE_NAMES,
-    VARIANT_NAMES,
-  } from './config';
+  import { API_HOST, DEFAULT_VARIANT } from './config';
+  import { SCHEDULE_NAMES, VARIANT_NAMES } from './consts';
   import type { Schedule } from './types';
   import { formatDate, formatEndDate, formatTime, SECS_IN_DAY } from './utils';
 
