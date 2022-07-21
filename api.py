@@ -249,7 +249,7 @@ def format_description(
         nxt_url = HOST + ARENA_URL.format(nxt)
         desc = desc.replace("](next)", f"]({nxt_url})")
     else:
-        desc = re.sub(r"\[(.*?)\]\(next\)", "", r"\1")
+        desc = re.sub(r"\[(.*?)\]\(next\)", r"\1", desc)
     date = datetime.utcfromtimestamp(at)
     desc = desc.replace("{month}", f"{date:%B}")
     desc = desc.replace("{nth}", str(nth))
