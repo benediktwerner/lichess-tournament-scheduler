@@ -3,6 +3,7 @@
   import { VARIANT_NAMES } from './consts';
 
   import type { ApiArena, ArenaEdit } from './types';
+  import { alertErrorResponse } from './utils';
 
   export let token: string;
   export let gotoIndex: () => void;
@@ -80,7 +81,7 @@
         },
       });
       if (resp.ok) gotoIndex();
-      else alert(`Error: ${await resp.text()}`);
+      else await alertErrorResponse(resp);
     } catch (e) {
       alert(`Error: ${e}`);
     }

@@ -11,12 +11,12 @@ export const formatTime = (time: number) => {
 };
 
 export const formatDate = (t?: number) => {
-  if (!t) return "";
+  if (!t) return '';
   return new Date(t * 1000).toISOString().slice(0, 10);
 };
 
 export const formatEndDate = (t?: number) => {
-  if (!t) return "";
+  if (!t) return '';
   if (t % SECS_IN_DAY === 0) return formatDate(t - SECS_IN_DAY);
   else return formatDate(t - (t % SECS_IN_DAY));
 };
@@ -39,4 +39,15 @@ export const formatDuration = (minutes: number) => {
 
 export const sleep = async (delay: number) => {
   await new Promise((resolve) => setTimeout(resolve, delay));
+};
+
+export const alertErrorResponse = async (resp: Response) => {
+  try {
+    const json = await resp.json();
+    if (!json.name || !json.description)
+      alert(`Error: ${JSON.stringify(json)}`);
+    else alert(`Error: ${json.name}\n\n${json.description}`);
+  } catch {
+    alert(`Error: ${await resp.text()}`);
+  }
 };

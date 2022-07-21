@@ -2,6 +2,7 @@
   import type { Schedule, Schedules, TeamArena } from './types';
   import { API_HOST, LICHESS_HOST } from './config';
   import {
+    alertErrorResponse,
     formatDate,
     formatDuration,
     formatEndDate,
@@ -101,7 +102,7 @@
         await promise;
       }
     } else {
-      alert(`Error: ${await resp.text()}`);
+      await alertErrorResponse(resp);
     }
   };
 
@@ -112,7 +113,7 @@
       headers: { Authorization: `Bearer ${token}` },
     });
     if (resp.ok) load(false);
-    else alert(`Error: ${await resp.text()}`);
+    else await alertErrorResponse(resp);
   };
 
   const handleCancel = async (team: string, id: string) => {
@@ -122,7 +123,7 @@
       headers: { Authorization: `Bearer ${token}` },
     });
     if (resp.ok) await loadCreatedForTeam(team);
-    else alert(`Error: ${await resp.text()}`);
+    else await alertErrorResponse(resp);
   };
 
   const formatSchedule = (day: number) => {
@@ -141,7 +142,7 @@
       teamsWithBadTokens.delete(team);
       teamsWithBadTokens = teamsWithBadTokens;
     } else {
-      alert('Error: ' + (await resp.text()));
+      await alertErrorResponse(resp);
     }
   };
 

@@ -2,7 +2,13 @@
   import { API_HOST, DEFAULT_VARIANT } from './config';
   import { SCHEDULE_NAMES, VARIANT_NAMES } from './consts';
   import type { Schedule } from './types';
-  import { formatDate, formatEndDate, formatTime, SECS_IN_DAY } from './utils';
+  import {
+    alertErrorResponse,
+    formatDate,
+    formatEndDate,
+    formatTime,
+    SECS_IN_DAY,
+  } from './utils';
 
   export let token: string;
   export let gotoIndex: () => void;
@@ -110,7 +116,7 @@
         },
       });
       if (resp.ok) gotoIndex();
-      else alert(`Error: ${await resp.text()}`);
+      else await alertErrorResponse(resp);
     } catch (e) {
       alert(`Error: ${e}`);
     }
@@ -156,7 +162,8 @@
           series: <code>[Next tournament](next)</code>
           <br />
           Use <code>{'{name}'}</code> to insert the name of the tournament. You
-          can also use <code>{'{month}'}</code>, <code>{'{n}'}</code>, and <code>{'{nth}'}</code> as above.
+          can also use <code>{'{month}'}</code>, <code>{'{n}'}</code>, and
+          <code>{'{nth}'}</code> as above.
         </small>
       </td>
     </tr>
