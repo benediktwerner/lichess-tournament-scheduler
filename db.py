@@ -120,11 +120,16 @@ class Db:
         return [(row["id"], row["time"]) for row in rows]
 
     def get_scheduled(self) -> Set[Tuple[int, int]]:
-        rows = self._query("SELECT scheduleId, time FROM createdArenas WHERE time > ?", (int(time()),))
+        rows = self._query(
+            "SELECT scheduleId, time FROM createdArenas WHERE time > ?", (int(time()),)
+        )
         return set((row["scheduleId"], row["time"]) for row in rows)
 
     def num_created_before(self, schedule_id: int, timestamp: int) -> int:
-        result = self._query_one("SELECT COUNT(*) FROM createdArenas WHERE scheduleId = ? AND time < ?", (schedule_id, timestamp))
+        result = self._query_one(
+            "SELECT COUNT(*) FROM createdArenas WHERE scheduleId = ? AND time < ?",
+            (schedule_id, timestamp),
+        )
         if result:
             return result[0]
         return 0
@@ -136,7 +141,9 @@ class Db:
         )
         return result["id"] if result else None
 
-    def previous_two_created(self, schedule_id: int, timestamp: int) -> Tuple[Optional[str], Optional[str]]:
+    def previous_two_created(
+        self, schedule_id: int, timestamp: int
+    ) -> Tuple[Optional[str], Optional[str]]:
         rows = self._query(
             "SELECT id FROM createdArenas WHERE scheduleId = ? and time < ? ORDER BY time DESC LIMIT 2",
             (schedule_id, timestamp),
