@@ -95,6 +95,7 @@ class Db:
     def delete_created(self, id: str) -> None:
         with self.db as conn:
             conn.execute("DELETE FROM createdArenas WHERE id = ?", (id,))
+            conn.execute("DELETE FROM scheduledMsgs WHERE arenaId = ?", (id,))
 
     def created(self, id: str) -> Optional[CreatedArena]:
         row = self._query_one(
