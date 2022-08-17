@@ -393,14 +393,6 @@
         </td>
       </tr>
     {/if}
-    {#if !create}
-      <tr>
-        <td>Update already <br /> created tournaments:</td>
-        <td>
-          <input type="checkbox" bind:checked={updateCreated} />
-        </td>
-      </tr>
-    {/if}
     <tr>
       <td> Message: </td>
       <td>
@@ -435,6 +427,15 @@
       </tr>
     {/if}
   </table>
+  <hr />
+  {#if !create}
+    <tr>
+      <td>Update already created tournaments:</td>
+      <td>
+        <input type="checkbox" bind:checked={updateCreated} />
+      </td>
+    </tr>
+  {/if}
   <br />
   <button type="button" on:click={handleSave}>
     {create ? 'Create' : 'Save'}
