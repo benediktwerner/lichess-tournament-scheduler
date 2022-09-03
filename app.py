@@ -190,8 +190,8 @@ def edit() -> str:
         for i, (id, at) in enumerate(upcoming):
             err = api.update_arena(
                 ArenaEdit.from_schedule(schedule, id, at),
-                upcoming[i - 1] if i > 0 else prev,
-                upcoming[i + 1] if i + 1 < len(upcoming) else None,
+                upcoming[i - 1][0] if i > 0 else prev,
+                upcoming[i + 1][0] if i + 1 < len(upcoming) else None,
                 nth + i + 1,
                 app.config["LICHESS_API_KEY"],
             )

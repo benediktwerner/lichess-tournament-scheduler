@@ -185,7 +185,9 @@ def update_arena(
     )
 
     if not resp.ok:
-        return resp.text
+        return str(resp.text)
+
+    return None
 
 
 def update_link_to_next_arena(

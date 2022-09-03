@@ -314,7 +314,7 @@ class CreatedArena:
     time: int
 
     @staticmethod
-    def from_row(row: sqlite3.Row) -> ScheduleWithId:
+    def from_row(row: sqlite3.Row) -> CreatedArena:
         return CreatedArena(**row)  # type: ignore
 
 

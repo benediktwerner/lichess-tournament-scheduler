@@ -92,7 +92,7 @@ class SchedulerThread(Thread):
 
             if (msg.token, msg.team) not in good_tokens:
                 token = api.verify_token(msg.token)
-                if token.expired or not token.allows_teams:
+                if not token or token.expired or not token.allows_teams:
                     bad_tokens.add((msg.token, msg.team))
                     logger.warn(f"Bad token")
                     with Db() as db:

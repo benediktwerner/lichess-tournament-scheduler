@@ -55,7 +55,7 @@ class Db:
         version = self._query_one("PRAGMA user_version")
         if version is None:
             raise Exception("pragma user_version returned None")
-        return version[0]
+        return int(version[0])
 
     def __enter__(self) -> Db:
         self.db = sqlite3.connect(DATABASE)
@@ -130,7 +130,7 @@ class Db:
             (schedule_id, timestamp),
         )
         if result:
-            return result[0]
+            return int(result[0])
         return 0
 
     def previous_created(self, schedule_id: int, timestamp: int) -> Optional[str]:
@@ -379,13 +379,13 @@ class Db:
                 "INSERT INTO badTokens (token, team) VALUES (?, ?)", (token, team)
             )
 
-    def bad_tokens(self) -> Set[str]:
+    def bad_tokens(self) -> Set[Tuple[str, str]]:
         return set(
             (row["token"], row["team"])
             for row in self._query("SELECT token, team FROM badTokens")
         )
 
-    def bad_tokens_for_team(self, team: str) -> List[str]:
+    def bad_tokens_for_team(self, team: str) -> Set[str]:
         return set(
             row["token"]
             for row in self._query(
