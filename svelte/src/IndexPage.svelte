@@ -94,7 +94,7 @@
         } catch {}
 
         let promise = Promise.resolve();
-        for (const [team, _] of teams) {
+        for (const [team, _] of teams!) {
           promise = promise
             .then(() => loadCreatedForTeam(team))
             .then(() => sleep(250));
@@ -153,6 +153,7 @@
   <h4>Loading ...</h4>
 {:else}
   {#each teams as [team, schedules], i}
+    {@const arenas = createdArenas[team]}
     <h2>
       <a href="https://lichess.org/team/{team}" target="_blank">{team}</a>
     </h2>
@@ -165,10 +166,10 @@
         Replace with your current token
       </button><br />
     {/if}
-    {#if createdArenas[team] && createdArenas[team].length > 0}
+    {#if arenas && arenas.length > 0}
       <h4>Created tournaments</h4>
       <table class="overview-table">
-        {#each createdArenas[team] as arena}
+        {#each arenas as arena}
           <tr>
             <td>
               <a

@@ -9,7 +9,7 @@ export const VARIANT_NAMES = {
   kingOfTheHill: 'King Of The Hill',
   racingKings: 'Racing Kings',
   threeCheck: 'Three Check',
-};
+} as Record<string, string>;
 export const SCHEDULE_NAMES = [
   'Every day',
   'Monday',

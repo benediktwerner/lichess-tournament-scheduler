@@ -26,16 +26,16 @@
   };
 </script>
 
-{#if page === Page.ScheduleCreate}
+{#if page === Page.ScheduleCreate && team}
   <EditPage {token} {team} {gotoIndex} />
-{:else if page === Page.ScheduleEdit}
+{:else if page === Page.ScheduleEdit && editSchedule}
   <EditPage
     {token}
     schedule={editSchedule}
     team={editSchedule.team}
     {gotoIndex}
   />
-{:else if page === Page.ArenaEdit}
+{:else if page === Page.ArenaEdit && team && editArena}
   <EditArenaPage {token} {team} arena={editArena} {gotoIndex} />
 {:else}
   <IndexPage

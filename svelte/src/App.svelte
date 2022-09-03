@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { OAuth2AuthCodePKCE } from '@bity/oauth2-auth-code-pkce';
+  import {
+    type AccessContext,
+    OAuth2AuthCodePKCE,
+  } from '@bity/oauth2-auth-code-pkce';
   import { API_HOST, LICHESS_HOST } from './config';
   import { API_VERSION } from './consts';
   import Router from './Router.svelte';
@@ -20,7 +23,7 @@
     onInvalidGrant: (_retry) => {},
   });
 
-  const loadAccessContext = () => {
+  const loadAccessContext = (): AccessContext | null => {
     const ctx = localStorage.getItem('token');
     return ctx ? JSON.parse(ctx) : null;
   };
@@ -32,8 +35,8 @@
 
   const handleLogout = async () => {
     localStorage.clear();
-    accessContext = undefined;
-    error = undefined;
+    accessContext = null;
+    error = null;
 
     // const token = accessContext?.token?.value;
     // await fetch(`${LICHESS_HOST}/api/token`, {
@@ -65,12 +68,12 @@
         forceLogout = false;
       }
     } catch (err) {
-      error = err;
+      error = '' + err;
     }
   };
 
-  let error = null;
-  let accessContext = loadAccessContext();
+  let error: string | null = null;
+  let accessContext: AccessContext | null = loadAccessContext();
   let outdated = true;
   let forceLogout = !localStorage.getItem('hasTeamScope');
   init();

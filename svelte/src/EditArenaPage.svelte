@@ -52,7 +52,7 @@
       startsAt: startTime
         ? Math.round(+new Date(startTime + 'Z') / 1000)
         : undefined,
-      description: description || null,
+      description: description || undefined,
       clock,
       increment,
       minutes,
@@ -60,14 +60,14 @@
       rated,
       berserkable,
       streakable,
-      position: position || null,
-      minRating: minRatingEnabled && minRating ? minRating : null,
-      maxRating: maxRatingEnabled && maxRating ? maxRating : null,
-      minGames: minGamesEnabled && minGames ? minGames : null,
+      position: position || undefined,
+      minRating: minRatingEnabled && minRating ? minRating : undefined,
+      maxRating: maxRatingEnabled && maxRating ? maxRating : undefined,
+      minGames: minGamesEnabled && minGames ? minGames : undefined,
       isTeamBattle,
-      teamBattleTeams: isTeamBattle ? teamBattleTeams : null,
-      teamBattleLeaders: isTeamBattle ? teamBattleLeaders : null,
-      msgMinutesBefore: msgEnabled ? msgMinutesBefore : null,
+      teamBattleTeams: isTeamBattle ? teamBattleTeams : undefined,
+      teamBattleLeaders: isTeamBattle ? teamBattleLeaders : undefined,
+      msgMinutesBefore: msgEnabled ? msgMinutesBefore : undefined,
       msgTemplate,
     };
 

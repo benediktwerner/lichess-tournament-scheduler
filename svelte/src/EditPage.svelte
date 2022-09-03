@@ -17,8 +17,7 @@
 
   let form: HTMLFormElement;
 
-  const create = schedule === null;
-  const id = create ? 0 : schedule.id;
+  const [create, id] = schedule === null ? [true, 0] : [false, schedule.id];
 
   let name = schedule?.name ?? '';
   let description = schedule?.description ?? '';
@@ -49,7 +48,7 @@
   let scheduleEndEnabled = !!scheduleEnd;
   let teamBattleTeams = schedule?.teamBattleTeams;
   let teamBattleLeaders = schedule?.teamBattleLeaders;
-  let isTeamBattle = teamBattleTeams && teamBattleTeams.length > 0;
+  let isTeamBattle = !!teamBattleTeams && teamBattleTeams.length > 0;
   let daysInAdvance = schedule?.daysInAdvance ?? 1;
   let updateCreated = false;
   let msgEnabled = !!schedule?.msgMinutesBefore;
@@ -63,14 +62,16 @@
       return;
     }
 
+    if (!scheduleTime) return alert('Invalid time');
     const [hh, mm] = scheduleTime.split(':');
+    if (!hh || !mm) return alert('Invalid time');
     const time = parseInt(hh) * 60 + parseInt(mm);
 
     const schedule: Schedule & { updateCreated: boolean } = {
       id,
       team,
       name,
-      description: description || null,
+      description: description || undefined,
       clock,
       increment,
       minutes,
@@ -78,10 +79,10 @@
       rated,
       berserkable,
       streakable,
-      position: position || null,
-      minRating: minRatingEnabled && minRating ? minRating : null,
-      maxRating: maxRatingEnabled && maxRating ? maxRating : null,
-      minGames: minGamesEnabled && minGames ? minGames : null,
+      position: position || undefined,
+      minRating: minRatingEnabled && minRating ? minRating : undefined,
+      maxRating: maxRatingEnabled && maxRating ? maxRating : undefined,
+      minGames: minGamesEnabled && minGames ? minGames : undefined,
       scheduleDay:
         scheduleDay === 11
           ? 10_000 + scheduleWeekdayOrdinal * 10 + scheduleWeekday
@@ -93,16 +94,16 @@
         (scheduleStartEnabled && scheduleStart) ||
         (scheduleDay > 7 && scheduleDay < 11)
           ? Math.floor(+new Date(scheduleStart) / 1000)
-          : null,
+          : undefined,
       scheduleEnd:
         scheduleEndEnabled && scheduleEnd
           ? Math.floor(+new Date(scheduleEnd) / 1000) + SECS_IN_DAY
-          : null,
-      teamBattleTeams: isTeamBattle ? teamBattleTeams : null,
-      teamBattleLeaders: isTeamBattle ? teamBattleLeaders : null,
+          : undefined,
+      teamBattleTeams: isTeamBattle ? teamBattleTeams : undefined,
+      teamBattleLeaders: isTeamBattle ? teamBattleLeaders : undefined,
       daysInAdvance,
       updateCreated,
-      msgMinutesBefore: msgEnabled ? msgMinutesBefore : null,
+      msgMinutesBefore: msgEnabled ? msgMinutesBefore : undefined,
       msgTemplate,
     };
 
