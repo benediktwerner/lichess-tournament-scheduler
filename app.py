@@ -100,7 +100,7 @@ def badTokens() -> Any:
     return jsonify(teams)
 
 
-@app.route("/replaceToken/<team>")
+@app.route("/replaceToken/<team>", methods=["POST"])
 def replaceToken(team: str) -> Any:
     user = auth()
     user.assert_for_team(team)
