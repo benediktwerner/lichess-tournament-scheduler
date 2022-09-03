@@ -114,6 +114,8 @@ def replaceToken(team: str) -> Any:
     with Db() as db:
         db.replace_token_for_team(team, user.token)
 
+    return OK_RESPONSE
+
 
 @app.route("/createdUpcomingIds")
 def createdUpcomingIds() -> Any:
