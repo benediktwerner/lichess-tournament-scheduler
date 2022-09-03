@@ -31,11 +31,11 @@
   };
 
   const handleLogout = async () => {
-    const token = accessContext?.token?.value;
-    localStorage.removeItem('token');
+    localStorage.clear();
     accessContext = undefined;
     error = undefined;
 
+    // const token = accessContext?.token?.value;
     // await fetch(`${LICHESS_HOST}/api/token`, {
     //   method: 'DELETE',
     //   headers: {
