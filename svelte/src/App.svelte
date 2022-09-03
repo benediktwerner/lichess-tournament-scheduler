@@ -36,12 +36,12 @@
     accessContext = undefined;
     error = undefined;
 
-    await fetch(`${LICHESS_HOST}/api/token`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    // await fetch(`${LICHESS_HOST}/api/token`, {
+    //   method: 'DELETE',
+    //   headers: {
+    //     Authorization: `Bearer ${token}`,
+    //   },
+    // });
   };
 
   const init = async () => {
