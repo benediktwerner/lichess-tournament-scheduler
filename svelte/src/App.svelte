@@ -28,6 +28,33 @@
     return ctx ? JSON.parse(ctx) : null;
   };
 
+  const loadUsername = async (): Promise<string> => {
+    const name = localStorage.getItem('username');
+    if (name) return name;
+
+    const token = accessContext?.token?.value;
+    if (!token) return '';
+
+    const resp = await fetch(`${LICHESS_HOST}/api/account`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (resp.ok) {
+      const json = await resp.json();
+      const username = json['username'];
+      if (username) {
+        localStorage.setItem('username', username);
+        return username;
+      }
+    } else {
+      console.error(
+        `Failed to fetch username: ${resp.status} ${resp.statusText}`
+      );
+    }
+
+    return '';
+  };
+
   const handleLogin = async () => {
     error = null;
     await oauth.fetchAuthorizationCode();
@@ -56,9 +83,9 @@
           'The frontend is out-of-date, probably due to caching. Please do a hard-reload using Ctrl+F5 or Cmd+F5 or Ctrl+Shift+R or Cmd+Shift+R';
       } else outdated = false;
 
-      const hasAuthCode = await oauth.isReturningFromAuthServer();
-      if (hasAuthCode) {
+      if (await oauth.isReturningFromAuthServer()) {
         accessContext = await oauth.getAccessToken();
+        localStorage.clear();
         localStorage.setItem('token', JSON.stringify(accessContext));
         localStorage.setItem('hasTeamScope', 'true');
         history.pushState(null, '', baseUrl());
@@ -67,6 +94,8 @@
         await handleLogout();
         forceLogout = false;
       }
+
+      userName = await loadUsername();
     } catch (err) {
       error = '' + err;
     }
@@ -74,6 +103,7 @@
 
   let error: string | null = null;
   let accessContext: AccessContext | null = loadAccessContext();
+  let userName = '';
   let outdated = true;
   let forceLogout = !localStorage.getItem('hasTeamScope');
   init();
@@ -83,7 +113,10 @@
 
 {#if !outdated}
   {#if accessContext?.token && !forceLogout}
-    <button class="logout" type="button" on:click={handleLogout}>Logout</button>
+    <div class="logout">
+      {userName}
+      <button type="button" on:click={handleLogout}>Logout</button>
+    </div>
     <Router token={accessContext.token.value} />
   {:else}
     <button type="button" on:click={handleLogin}>Login with Lichess</button>
