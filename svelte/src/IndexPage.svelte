@@ -18,7 +18,7 @@
   export let gotoEditArena: (id: string, team: string) => void;
   let teams: Schedules = null;
   let createdArenas: { [team: string]: TeamArena[] } = {};
-  let teamsWithBadTokens = new Set();
+  let teamsWithBadTokens: Set<string> = new Set();
 
   // {
   //   const arenas = localStorage.getItem('cachedCreatedArenas');
