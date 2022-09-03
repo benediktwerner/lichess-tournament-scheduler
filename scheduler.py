@@ -120,4 +120,4 @@ class SchedulerThread(Thread):
                         )
                     except Exception:
                         pass
-            sleep(5 * 60)
+            sleep(60)
