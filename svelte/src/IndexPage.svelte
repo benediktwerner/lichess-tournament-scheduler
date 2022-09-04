@@ -9,7 +9,6 @@
     formatEndDate,
     formatTime,
     formatUntil,
-    sleep,
   } from './utils';
   import { SCHEDULE_NAMES, TOKEN_ISSUES, VARIANT_NAMES } from './consts';
   import { getContext } from 'svelte';
@@ -22,6 +21,7 @@
   let teams: Schedules = null;
   let createdArenas: { [team: string]: TeamArena[] } = {};
   let tokenStates: Map<string, TokenState> = new Map();
+  let showCreatedLoadingBtn = false;
 
   // {
   //   const arenas = localStorage.getItem('cachedCreatedArenas');
@@ -100,13 +100,9 @@
           console.error(e);
         }
 
-        let promise = Promise.resolve();
-        for (const [team, _] of teams!) {
-          promise = promise
-            .then(() => loadCreatedForTeam(team))
-            .then(() => sleep(250));
-        }
-        await promise;
+        if (teams!.length === 1) {
+          await loadCreatedForTeam(teams![0]![0]);
+        } else showCreatedLoadingBtn = true;
       }
     } else {
       await alertErrorResponse(resp);
@@ -201,6 +197,8 @@
           </tr>
         {/each}
       </table>
+    {:else if showCreatedLoadingBtn}
+      <button on:click={() => loadCreatedForTeam(team)}>Load created</button>
     {/if}
     {#if schedules.length > 0}
       <h4>Scheduled tournaments</h4>
