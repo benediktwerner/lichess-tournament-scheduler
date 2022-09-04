@@ -398,6 +398,7 @@ class MsgToSend:
     arenaId: str
     team: str
     template: str
+    sendTime: int
 
     def text(self) -> str:
         return self.template.replace(

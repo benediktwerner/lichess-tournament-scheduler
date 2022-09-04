@@ -73,8 +73,12 @@ class SchedulerThread(Thread):
         with Db() as db:
             msgs = db.get_and_remove_scheduled_msgs()
 
+        now = datetime.utcfromtimestamp(int(time()))
+
         for msg in msgs:
-            logger.info(f"Sending team PM for {msg.arenaId}")
+            logger.info(
+                f"Sending team PM for {msg.arenaId} at {now:%Y-%m-%d %H:%M:%S} (scheduled {datetime.utcfromtimestamp(msg.sendTime):%Y-%m-%d %H:%M:%S})"
+            )
 
             with Db() as db:
                 token = db.token_for_team(msg.team)

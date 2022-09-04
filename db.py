@@ -303,10 +303,13 @@ class Db:
     def get_and_remove_scheduled_msgs(self) -> List[MsgToSend]:
         now = int(time())
         rows = self._query(
-            "SELECT arenaId, team, template FROM scheduledMsgs WHERE sendTime < ? AND sendTime > ?",
+            "SELECT arenaId, team, template, sendTime FROM scheduledMsgs WHERE sendTime < ? AND sendTime > ?",
             (now, now - 30 * 60),
         )
-        msgs = [MsgToSend(row["arenaId"], row["team"], row["template"]) for row in rows]
+        msgs = [
+            MsgToSend(row["arenaId"], row["team"], row["template"], row["sendTime"])
+            for row in rows
+        ]
         with self.db as conn:
             conn.execute("DELETE FROM scheduledMsgs WHERE sendTime < ?", (now,))
         return msgs
