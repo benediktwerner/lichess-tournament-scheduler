@@ -88,17 +88,20 @@ export const createShowSetTokenDialogFn =
     );
   };
 
-export const fetchTokenUser = async (team: string, token: string) => {
-  const resp = await fetch(API_HOST + `/hasToken/${team}`, {
+export const fetchTokenUser = async (
+  team: string,
+  token: string
+): Promise<string | null> => {
+  const resp = await fetch(API_HOST + `/tokenUser/${team}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (resp.ok) {
     const j = await resp.json();
-    return j.exists;
+    return j.user;
   } else {
     console.error(
       `Failed to check token validity: ${resp.status} ${resp.statusText}`
     );
-    return true;
+    return null;
   }
 };

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { getContext } from 'svelte';
 
-  import { API_HOST } from './config';
+  import { API_HOST, LICHESS_HOST } from './config';
   import { VARIANT_NAMES } from './consts';
   import type { SimpleModalContext } from './simple-modal';
 
@@ -45,7 +45,7 @@
   let msgMinutesBefore = arena?.msgMinutesBefore ?? 60;
   let msgTemplate = arena?.msgTemplate ?? '';
 
-  let tokenUser = true;
+  let tokenUser: string | null = null;
 
   const updateTokenUser = async () => {
     tokenUser = await fetchTokenUser(team, token);
@@ -275,7 +275,7 @@
       {#if tokenUser}
         <tr>
           <td>Sender:</td>
-          <td>{tokenUser}</td>
+          <td><a href={`${LICHESS_HOST}/@/${tokenUser}`}>@{tokenUser}</a></td>
         </tr>
       {:else}
         <tr>

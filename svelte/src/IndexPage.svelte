@@ -167,7 +167,9 @@
       </button>
       <br />
     {:else if tokenState && tokenState.user}
-      Team messages for this team are currently being sent from {tokenState.user}
+      Team messages for this team are currently being sent from <a
+        href={`${LICHESS_HOST}/@/${tokenState.user}`}>@{tokenState.user}</a
+      >
       <button on:click={() => showSetTokenDialog(team)}>Change</button>
       <br />
     {/if}
