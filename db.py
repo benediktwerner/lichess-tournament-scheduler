@@ -28,7 +28,7 @@ class Db:
             logger.info("No tables. Initializing database schema.")
             with self.db as trans:
                 with app.open_resource("schema.sql", mode="r") as f:
-                    trans.executescript(f.read())
+                    trans.executescript("BEGIN;" + f.read())
                 trans.execute(f"PRAGMA user_version = {VERSION}")
             return
 
@@ -43,13 +43,13 @@ class Db:
 
         logger.info(f"Db schema version is {version}. Migrating up to {VERSION}.")
 
-        with self.db as trans:
-            while version < VERSION:
-                version += 1
-                logger.info(f"Migrating to {version}")
+        while version < VERSION:
+            version += 1
+            logger.info(f"Migrating to {version}")
+            with self.db as trans:
                 with app.open_resource(f"migrations/{version}.sql", mode="r") as f:
-                    trans.executescript(f.read())
-            trans.execute(f"PRAGMA user_version = {VERSION}")
+                    trans.executescript("BEGIN;" + f.read())
+                trans.execute(f"PRAGMA user_version = {version}")
 
     def _version(self) -> int:
         version = self._query_one("PRAGMA user_version")
@@ -64,6 +64,9 @@ class Db:
 
     def __exit__(self, exc_type: Any, exc_value: Any, exc_traceback: Any) -> None:
         self.db.close()
+
+    def _begin(self) -> None:
+        self.db.execute("BEGIN")
 
     def _query(self, query: str, args: tuple = ()) -> List[sqlite3.Row]:
         return self.db.execute(query, args).fetchall()
@@ -94,6 +97,7 @@ class Db:
 
     def delete_created(self, id: str) -> None:
         with self.db as conn:
+            self._begin()
             conn.execute("DELETE FROM createdArenas WHERE id = ?", (id,))
             conn.execute("DELETE FROM scheduledMsgs WHERE arenaId = ?", (id,))
 
@@ -309,6 +313,7 @@ class Db:
 
     def update_scheduled_msgs(self, schedule: ScheduleWithId) -> None:
         with self.db as conn:
+            self._begin()
             conn.execute(
                 "DELETE FROM scheduledMsgs WHERE scheduleId = ?", (schedule.id,)
             )
@@ -336,6 +341,7 @@ class Db:
         template: Optional[str],
     ) -> None:
         with self.db as conn:
+            self._begin()
             conn.execute("DELETE FROM scheduledMsgs WHERE arenaId = ?", (arena.id,))
             if minsBefore and minsBefore > 0 and template:
                 conn.execute(
@@ -422,6 +428,6 @@ class Db:
         )
 
         if row and not row["isBad"]:
-            return row["user"]
+            return str(row["user"])
 
         return None
