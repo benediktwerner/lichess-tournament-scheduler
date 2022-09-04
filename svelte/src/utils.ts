@@ -77,9 +77,8 @@ export const createShowSetTokenDialogFn =
         closeButton: false,
         styleContent: { padding: '24px' },
         styleWindow: {
-          // background: 'var(--card-bg)',
-          // color: 'var(--text)',
-          width: '400px',
+          background: '#1c2435',
+          color: '#c9d1d9',
         },
       }
     );
