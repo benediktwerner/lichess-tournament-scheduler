@@ -121,7 +121,7 @@ def setToken(team: str) -> Any:
     vToken = api.verify_token(token)
 
     if not vToken or not vToken.is_valid_msg_token_for_team(team):
-        abort(400, "Invalid token")
+        abort(400, description="Invalid token")
 
     with Db() as db:
         db.set_token_for_team(team, token, vToken.userId)
@@ -197,7 +197,7 @@ def edit() -> str:
                 app.config["LICHESS_API_KEY"],
             )
             if err is not None:
-                abort(500, f"Failed to update tournament {id}: {err}")
+                abort(500, description=f"Failed to update tournament {id}: {err}")
 
             if schedule.is_team_battle:
                 try:
