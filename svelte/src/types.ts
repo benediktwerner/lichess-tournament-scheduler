@@ -108,3 +108,8 @@ export interface ArenaEdit {
   msgMinutesBefore?: number;
   msgTemplate?: string;
 }
+
+export interface TokenState {
+  issue?: string;
+  user?: string;
+}

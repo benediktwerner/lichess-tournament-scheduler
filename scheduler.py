@@ -4,12 +4,11 @@ import logging
 from datetime import datetime
 from threading import Thread
 from time import sleep, time
-from typing import Any, Dict, List, Set, Tuple, cast
+from typing import Any, List, Tuple, cast
 
 import api
-from api import Arena
 from db import Db
-from model import Schedule, ScheduleWithId
+from model import ScheduleWithId
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -52,18 +51,12 @@ class SchedulerThread(Thread):
                 db.insert_created(id, s.id, s.team, nxt)
                 logger.info(f"Created {name or s.name} as {id}")
 
-                if (
-                    s.msgMinutesBefore
-                    and s.msgMinutesBefore > 0
-                    and s.msgTemplate
-                    and s.msgToken
-                ):
+                if s.msgMinutesBefore and s.msgMinutesBefore > 0 and s.msgTemplate:
                     db.insert_scheduled_msg(
                         id,
                         s.id,
                         s.team,
                         s.msgTemplate,
-                        s.msgToken,
                         s.msgMinutesBefore,
                         nxt - s.msgMinutesBefore * 60,
                     )
@@ -79,29 +72,25 @@ class SchedulerThread(Thread):
     def send_scheduled_messages(self) -> None:
         with Db() as db:
             msgs = db.get_and_remove_scheduled_msgs()
-            bad_tokens = db.bad_tokens()
-
-        good_tokens = set()
 
         for msg in msgs:
             logger.info(f"Sending team PM for {msg.arenaId}")
 
-            if (msg.token, msg.team) in bad_tokens:
-                logger.warn("Known bad token")
+            with Db() as db:
+                token = db.token_for_team(msg.team)
+
+            if not token:
+                logger.warn(f"No valid token found")
                 continue
 
-            if (msg.token, msg.team) not in good_tokens:
-                token = api.verify_token(msg.token)
-                if not token or token.expired or not token.allows_teams:
-                    bad_tokens.add((msg.token, msg.team))
-                    logger.warn(f"Bad token")
-                    with Db() as db:
-                        db.insert_bad_token(msg.token, msg.team)
-                    continue
-                else:
-                    good_tokens.add((msg.token, msg.team))
+            vToken = api.verify_token(token)
+            if not vToken or not vToken.is_valid_msg_token_for_team(msg.team):
+                logger.warn("Bad token")
+                with Db() as db:
+                    db.mark_bad_token(msg.team, token)
+                continue
 
-            api.send_team_msg(msg)
+            api.send_team_msg(msg, token)
             sleep(5)
 
     def run(self) -> None:

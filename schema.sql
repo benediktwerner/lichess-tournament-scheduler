@@ -22,8 +22,7 @@ CREATE TABLE schedules (
     teamBattleLeaders INT,
     daysInAdvance INT,
     msgMinutesBefore INT,
-    msgTemplate TEXT,
-    msgToken TEXT
+    msgTemplate TEXT
 );
 
 CREATE TABLE createdArenas (
@@ -38,12 +37,14 @@ CREATE TABLE scheduledMsgs (
     scheduleId INT NOT NULL,
     team TEXT NOT NULL,
     template TEXT NOT NULL,
-    token TEXT NOT NULL,
     minutesBefore INT NOT NULL,
     sendTime INT NOT NULL
 );
 
-CREATE TABLE badTokens (
+CREATE TABLE msgTokens (
     token TEXT NOT NULL,
-    team TEXT NOT NULL
+    team TEXT NOT NULL UNIQUE,
+    user TEXT NOT NULL,
+    isBad BOOLEAN NOT NULL,
+    temporary BOOLEAN NOT NULL
 );

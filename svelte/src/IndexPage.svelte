@@ -1,8 +1,9 @@
 <script lang="ts">
-  import type { Schedule, Schedules, TeamArena } from './types';
+  import type { Schedule, Schedules, TeamArena, TokenState } from './types';
   import { API_HOST, LICHESS_HOST } from './config';
   import {
     alertErrorResponse,
+    createShowSetTokenDialogFn,
     formatDate,
     formatDuration,
     formatEndDate,
@@ -10,7 +11,9 @@
     formatUntil,
     sleep,
   } from './utils';
-  import { SCHEDULE_NAMES, VARIANT_NAMES } from './consts';
+  import { SCHEDULE_NAMES, TOKEN_ISSUES, VARIANT_NAMES } from './consts';
+  import { getContext } from 'svelte';
+  import type { SimpleModalContext } from './simple-modal';
 
   export let token: string;
   export let gotoCreateSchedule: (team: string) => void;
@@ -18,7 +21,7 @@
   export let gotoEditArena: (id: string, team: string) => void;
   let teams: Schedules = null;
   let createdArenas: { [team: string]: TeamArena[] } = {};
-  let teamsWithBadTokens: Set<string> = new Set();
+  let tokenStates: Map<string, TokenState> = new Map();
 
   // {
   //   const arenas = localStorage.getItem('cachedCreatedArenas');
@@ -75,11 +78,12 @@
     // localStorage.setItem('cachedCreatedArenas', JSON.stringify(createdArenas));
   };
 
-  const fetchTeamsWithBadTokens = async (): Promise<string[]> => {
-    const resp = await fetch(API_HOST + '/badTokens', {
+  const fetchTokenState = async (): Promise<Map<string, TokenState>> => {
+    const resp = await fetch(API_HOST + '/tokenState', {
       headers: { Authorization: `Bearer ${token}` },
     });
-    return await resp.json();
+    const state = await resp.json();
+    return new Map(Object.entries(state));
   };
 
   const load = async (reloadCreated: boolean) => {
@@ -90,8 +94,11 @@
       teams = await resp.json();
       if (reloadCreated) {
         try {
-          teamsWithBadTokens = new Set(await fetchTeamsWithBadTokens());
-        } catch {}
+          tokenStates = await fetchTokenState();
+        } catch (e) {
+          console.error('Error while fetching tokenIssues');
+          console.error(e);
+        }
 
         let promise = Promise.resolve();
         for (const [team, _] of teams!) {
@@ -133,18 +140,10 @@
     return `Every ${period} ${unit}`;
   };
 
-  const replaceToken = async (team: string) => {
-    const resp = await fetch(API_HOST + '/replaceToken/' + team, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (resp.ok) {
-      teamsWithBadTokens.delete(team);
-      teamsWithBadTokens = teamsWithBadTokens;
-    } else {
-      await alertErrorResponse(resp);
-    }
-  };
+  const modal = getContext<SimpleModalContext>('simple-modal');
+  const showSetTokenDialog = createShowSetTokenDialogFn(modal, async () => {
+    tokenStates = await fetchTokenState();
+  });
 
   load(true);
 </script>
@@ -154,17 +153,23 @@
 {:else}
   {#each teams as [team, schedules], i}
     {@const arenas = createdArenas[team]}
+    {@const tokenState = tokenStates.get(team)}
     <h2>
       <a href="https://lichess.org/team/{team}" target="_blank">{team}</a>
     </h2>
-    {#if teamsWithBadTokens.has(team)}
+    {#if tokenState && tokenState.issue}
       <span class="error">
-        One or more tokens used to authorize team messages for this team have
-        expired.
+        {TOKEN_ISSUES[tokenState.issue] ||
+          `The message token for this team has an unknown issue: ${tokenState.issue}`}
       </span>
-      <button on:click={() => replaceToken(team)}>
-        Replace with your current token
-      </button><br />
+      <button on:click={() => showSetTokenDialog(team)}>
+        Set a new token
+      </button>
+      <br />
+    {:else if tokenState && tokenState.user}
+      Team messages for this team are currently being sent from {tokenState.user}
+      <button on:click={() => showSetTokenDialog(team)}>Change</button>
+      <br />
     {/if}
     {#if arenas && arenas.length > 0}
       <h4>Created tournaments</h4>

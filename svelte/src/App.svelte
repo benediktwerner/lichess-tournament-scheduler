@@ -1,8 +1,9 @@
 <script lang="ts">
   import {
-    type AccessContext,
     OAuth2AuthCodePKCE,
+    type AccessContext,
   } from '@bity/oauth2-auth-code-pkce';
+  import Modal from 'svelte-simple-modal';
   import { API_HOST, LICHESS_HOST } from './config';
   import { API_VERSION } from './consts';
   import Router from './Router.svelte';
@@ -17,7 +18,7 @@
     authorizationUrl: `${LICHESS_HOST}/oauth`,
     tokenUrl: `${LICHESS_HOST}/api/token`,
     clientId: 'tournament-scheduler',
-    scopes: ['tournament:write', 'team:write'],
+    scopes: ['tournament:write'],
     redirectUrl: baseUrl(),
     onAccessTokenExpiry: (refreshAccessToken) => refreshAccessToken(),
     onInvalidGrant: (_retry) => {},
@@ -61,17 +62,18 @@
   };
 
   const handleLogout = async () => {
+    const token = accessContext?.token?.value;
+
     localStorage.clear();
     accessContext = null;
     error = null;
 
-    // const token = accessContext?.token?.value;
-    // await fetch(`${LICHESS_HOST}/api/token`, {
-    //   method: 'DELETE',
-    //   headers: {
-    //     Authorization: `Bearer ${token}`,
-    //   },
-    // });
+    await fetch(`${LICHESS_HOST}/api/token`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
   };
 
   const init = async () => {
@@ -87,12 +89,7 @@
         accessContext = await oauth.getAccessToken();
         localStorage.clear();
         localStorage.setItem('token', JSON.stringify(accessContext));
-        localStorage.setItem('hasTeamScope', 'true');
         history.pushState(null, '', baseUrl());
-        forceLogout = false;
-      } else if (accessContext?.token && forceLogout) {
-        await handleLogout();
-        forceLogout = false;
       }
 
       userName = await loadUsername();
@@ -105,27 +102,28 @@
   let accessContext: AccessContext | null = loadAccessContext();
   let userName = '';
   let outdated = true;
-  let forceLogout = !localStorage.getItem('hasTeamScope');
   init();
 </script>
 
-<h1>Lichess Tournament Scheduler</h1>
+<Modal>
+  <h1>Lichess Tournament Scheduler</h1>
 
-{#if !outdated}
-  {#if accessContext?.token && !forceLogout}
-    <div class="logout">
-      {userName}
-      <button type="button" on:click={handleLogout}>Logout</button>
-    </div>
-    <Router token={accessContext.token.value} />
-  {:else}
-    <button type="button" on:click={handleLogin}>Login with Lichess</button>
+  {#if !outdated}
+    {#if accessContext?.token}
+      <div class="logout">
+        {userName}
+        <button type="button" on:click={handleLogout}>Logout</button>
+      </div>
+      <Router token={accessContext.token.value} />
+    {:else}
+      <button type="button" on:click={handleLogin}>Login with Lichess</button>
+    {/if}
   {/if}
-{/if}
 
-{#if error}
-  <div class="error">{error}</div>
-{/if}
+  {#if error}
+    <div class="error">{error}</div>
+  {/if}
+</Modal>
 
 <style lang="scss">
   :global {

@@ -34,7 +34,6 @@ class Schedule:
     daysInAdvance: Optional[int]
     msgMinutesBefore: Optional[int]
     msgTemplate: Optional[str]
-    msgToken: Optional[str]
 
     @property
     def scheduleHour(self) -> int:
@@ -52,15 +51,11 @@ class Schedule:
     def days_in_advance(self) -> int:
         return self.daysInAdvance or 1
 
-    def clean_token(self) -> Schedule:
-        self.msgToken = None
-        return self
-
     def team_battle_teams(self) -> List[str]:
         return extract_team_battle_teams(self.team, self.teamBattleTeams)
 
     @staticmethod
-    def from_json(j: dict, token: str) -> Schedule:
+    def from_json(j: dict) -> Schedule:
         scheduleDay = get_or_raise(j, "scheduleDay", int)
         scheduleStart = get_opt_or_raise(j, "scheduleStart", int)
         if (
@@ -118,7 +113,6 @@ class Schedule:
             get_opt_or_raise(j, "daysInAdvance", int),
             get_opt_or_raise(j, "msgMinutesBefore", int),
             get_opt_or_raise(j, "msgTemplate", str),
-            token,
         )
 
     def next_times(self) -> List[int]:
@@ -195,8 +189,8 @@ class ScheduleWithId(Schedule):
         return s
 
     @staticmethod
-    def from_json(j: dict, token: str) -> ScheduleWithId:
-        s = Schedule.from_json(j, token)
+    def from_json(j: dict) -> ScheduleWithId:
+        s = Schedule.from_json(j)
         return ScheduleWithId(
             s.name,
             s.team,
@@ -221,7 +215,6 @@ class ScheduleWithId(Schedule):
             s.daysInAdvance,
             s.msgMinutesBefore,
             s.msgTemplate,
-            s.msgToken,
             get_or_raise(j, "id", int),
         )
 
@@ -405,7 +398,6 @@ class MsgToSend:
     arenaId: str
     team: str
     template: str
-    token: str
 
     def text(self) -> str:
         return self.template.replace(

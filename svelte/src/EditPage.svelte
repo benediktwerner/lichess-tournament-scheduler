@@ -1,9 +1,14 @@
 <script lang="ts">
+  import { getContext } from 'svelte';
+
   import { API_HOST, DEFAULT_VARIANT } from './config';
   import { SCHEDULE_NAMES, VARIANT_NAMES } from './consts';
+  import type { SimpleModalContext } from './simple-modal';
   import type { Schedule } from './types';
   import {
     alertErrorResponse,
+    createShowSetTokenDialogFn,
+    fetchTokenUser,
     formatDate,
     formatEndDate,
     formatTime,
@@ -54,6 +59,17 @@
   let msgEnabled = !!schedule?.msgMinutesBefore;
   let msgMinutesBefore = schedule?.msgMinutesBefore ?? 60;
   let msgTemplate = schedule?.msgTemplate ?? '';
+
+  let tokenUser = true;
+
+  const updateTokenUser = async () => {
+    tokenUser = await fetchTokenUser(team, token);
+  };
+
+  updateTokenUser();
+
+  const modal = getContext<SimpleModalContext>('simple-modal');
+  const showSetTokenDialog = createShowSetTokenDialogFn(modal, updateTokenUser);
 
   const handleSave = async () => {
     if (!form) return;
@@ -404,6 +420,23 @@
       </td>
     </tr>
     {#if msgEnabled}
+      {#if tokenUser}
+        <tr>
+          <td>Sender:</td>
+          <td>{tokenUser}</td>
+        </tr>
+      {:else}
+        <tr>
+          <td colspan="2">
+            <span class="error">
+              This team does not have a valid message token set up
+            </span>
+            <button on:click={() => showSetTokenDialog(team)}>
+              Set a token
+            </button>
+          </td>
+        </tr>
+      {/if}
       <tr>
         <td />
         <td>
@@ -420,9 +453,6 @@
           <br />
           <small>
             Use <code>{'{link}'}</code> to insert a link to the tournament.
-            <br />
-            The message will be sent from the account currently logged in on this
-            site.
           </small>
         </td>
       </tr>

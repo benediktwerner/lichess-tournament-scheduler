@@ -20,7 +20,7 @@ from model import ArenaEdit, ParseError, Schedule, ScheduleWithId, get_or_raise
 from scheduler import SchedulerThread
 
 OK_RESPONSE = '{"ok":true}'
-API_VERSION = "4"
+API_VERSION = "5"
 
 root = logging.getLogger()
 root.addHandler(default_handler)
@@ -72,7 +72,7 @@ def schedules() -> Any:
     with Db() as db:
         by_team = defaultdict(list)
         for s in db.schedules():
-            by_team[s.team].append(s.clean_token())
+            by_team[s.team].append(s)
         teams = app.config["TEAMS_WHITELIST"] if user.is_admin else user.teams
         return jsonify([(team, by_team[team]) for team in teams])
 
@@ -89,30 +89,41 @@ def scheduledMsg(id: str) -> Any:
     return jsonify({"msgMinutesBefore": minsBefore, "msgTemplate": template})
 
 
-@app.route("/badTokens")
-def badTokens() -> Any:
+@app.route("/tokenState")
+def tokenState() -> Any:
     user = auth()
-    teams = []
+    state = {}
     with Db() as db:
         for team in user.teams:
-            if db.bad_tokens_for_team(team):
-                teams.append(team)
-    return jsonify(teams)
+            state[team] = db.token_state(team)
+    return jsonify(state)
 
 
-@app.route("/replaceToken/<team>", methods=["POST"])
-def replaceToken(team: str) -> Any:
+@app.route("/tokenUser/<team>")
+def tokenExists(team: str) -> Any:
+    user = auth()
+    user.assert_for_team(team)
+    with Db() as db:
+        return jsonify({"user": db.token_user(team)})
+
+
+@app.route("/setToken/<team>", methods=["POST"])
+def setToken(team: str) -> Any:
     user = auth()
     user.assert_for_team(team)
 
-    if team not in user.teams:
-        abort(
-            400,
-            description="You aren't a member of this team so you can't schedule messages for it",
-        )
+    j = request.json
+    if not j:
+        abort(400)
+
+    token = j.get("token")
+    vToken = api.verify_token(token)
+
+    if not vToken or not vToken.is_valid_msg_token_for_team(team):
+        abort(400, "Invalid token")
 
     with Db() as db:
-        db.replace_token_for_team(team, user.token)
+        db.set_token_for_team(team, token, vToken.userId)
 
     return OK_RESPONSE
 
@@ -135,17 +146,11 @@ def create() -> str:
         j = request.json
         if not j:
             abort(400)
-        schedule = Schedule.from_json(j, user.token)
+        schedule = Schedule.from_json(j)
     except ParseError as e:
         abort(400, description=str(e))
 
     user.assert_for_team(schedule.team)
-
-    if schedule.msgMinutesBefore and schedule.team not in user.teams:
-        abort(
-            400,
-            description="You aren't a member of this team so you can't schedule messages for it",
-        )
 
     with Db() as db:
         db.insert_schedule(schedule)
@@ -161,17 +166,12 @@ def edit() -> str:
         j = request.json
         if not j:
             abort(400)
-        schedule = ScheduleWithId.from_json(j, user.token)
+        schedule = ScheduleWithId.from_json(j)
         update_created = get_or_raise(j, "updateCreated", bool)
     except ParseError as e:
         abort(400, description=str(e))
 
     user.assert_for_team(schedule.team)
-    if schedule.msgMinutesBefore and schedule.team not in user.teams:
-        abort(
-            400,
-            description="You aren't a member of this team so you can't schedule messages for it",
-        )
 
     with Db() as db:
         db.update_schedule(schedule)
@@ -226,12 +226,6 @@ def editArena() -> str:
 
     user.assert_for_team(arena.team)
 
-    if arena.msgMinutesBefore and arena.team not in user.teams:
-        abort(
-            400,
-            description="You aren't a member of this team so you can't schedule messages for it",
-        )
-
     with Db() as db:
         old = db.created(arena.id)
         if old is None or old.team != arena.team:
@@ -248,9 +242,7 @@ def editArena() -> str:
         if arena.startsAt:
             old.time = arena.startsAt
         db.update_created(old)
-        db.update_scheduled_msg(
-            old, arena.msgMinutesBefore, arena.msgTemplate, user.token
-        )
+        db.update_scheduled_msg(old, arena.msgMinutesBefore, arena.msgTemplate)
 
     if arena.isTeamBattle:
         try:
@@ -264,7 +256,7 @@ def editArena() -> str:
             app.logger.error(f"Failed to update arena teams: {e}")
             abort(
                 500,
-                description="Failed to update teams (but other changes were applied successfully)",
+                description="Failed to update team battle teams (but other changes were applied successfully)",
             )
 
     return OK_RESPONSE

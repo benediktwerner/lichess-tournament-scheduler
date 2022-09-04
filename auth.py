@@ -90,12 +90,7 @@ class Auth:
 
         try:
             res = api.verify_token(token)
-            if (
-                not res
-                or res.expired
-                or not res.allows_teams
-                or not res.allows_tournaments
-            ):
+            if not res or res.expired or not res.allows_tournaments:
                 abort(403)
 
             teams = [

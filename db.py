@@ -7,10 +7,10 @@ from typing import Any, List, Optional, Set, Tuple
 
 from flask import Flask
 
-from model import ArenaEdit, CreatedArena, MsgToSend, Schedule, ScheduleWithId
+from model import CreatedArena, MsgToSend, Schedule, ScheduleWithId
 
 DATABASE = "database.sqlite"
-VERSION = 8
+VERSION = 9
 
 
 logger = logging.getLogger(__name__)
@@ -191,9 +191,8 @@ class Db:
                     teamBattleLeaders,
                     daysInAdvance,
                     msgMinutesBefore,
-                    msgTemplate,
-                    msgToken
-                   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    msgTemplate
+                   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     s.name,
@@ -219,7 +218,6 @@ class Db:
                     s.daysInAdvance,
                     s.msgMinutesBefore,
                     s.msgTemplate,
-                    s.msgToken,
                 ),
             )
 
@@ -249,7 +247,6 @@ class Db:
                     daysInAdvance = ?,
                     msgMinutesBefore = ?,
                     msgTemplate = ?,
-                    msgToken = ?
                    WHERE id = ? and team = ?
                 """,
                 (
@@ -275,7 +272,6 @@ class Db:
                     s.daysInAdvance,
                     s.msgMinutesBefore,
                     s.msgTemplate,
-                    s.msgToken,
                     s.id,
                     s.team,
                 ),
@@ -291,26 +287,22 @@ class Db:
         scheduleId: int,
         team: str,
         template: str,
-        token: str,
         minutesBefore: int,
         sendTime: int,
     ) -> None:
         with self.db as conn:
             conn.execute(
-                "INSERT INTO scheduledMsgs (arenaId, scheduleId, team, template, token, minutesBefore, sendTime) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (arenaId, scheduleId, team, template, token, minutesBefore, sendTime),
+                "INSERT INTO scheduledMsgs (arenaId, scheduleId, team, template, minutesBefore, sendTime) VALUES (?, ?, ?, ?, ?, ?)",
+                (arenaId, scheduleId, team, template, minutesBefore, sendTime),
             )
 
     def get_and_remove_scheduled_msgs(self) -> List[MsgToSend]:
         now = int(time())
         rows = self._query(
-            "SELECT arenaId, team, template, token FROM scheduledMsgs WHERE sendTime < ? AND sendTime > ?",
+            "SELECT arenaId, team, template FROM scheduledMsgs WHERE sendTime < ? AND sendTime > ?",
             (now, now - 30 * 60),
         )
-        msgs = [
-            MsgToSend(row["arenaId"], row["team"], row["template"], row["token"])
-            for row in rows
-        ]
+        msgs = [MsgToSend(row["arenaId"], row["team"], row["template"]) for row in rows]
         with self.db as conn:
             conn.execute("DELETE FROM scheduledMsgs WHERE sendTime < ?", (now,))
         return msgs
@@ -324,15 +316,13 @@ class Db:
                 schedule.msgMinutesBefore
                 and schedule.msgMinutesBefore > 0
                 and schedule.msgTemplate
-                and schedule.msgToken
             ):
                 conn.execute(
-                    """INSERT INTO scheduledMsgs (arenaId, scheduleId, team, template, token, minutesBefore, sendTime) 
-                            SELECT id, scheduleId, team, ?, ?, ?, time - ? FROM createdArenas WHERE scheduleId = ?
-                        """,
+                    """INSERT INTO scheduledMsgs (arenaId, scheduleId, team, template, minutesBefore, sendTime) 
+                        SELECT id, scheduleId, team, ?, ?, time - ? FROM createdArenas WHERE scheduleId = ?
+                    """,
                     (
                         schedule.msgTemplate,
-                        schedule.msgToken,
                         schedule.msgMinutesBefore,
                         schedule.msgMinutesBefore,
                         schedule.id,
@@ -344,21 +334,19 @@ class Db:
         arena: CreatedArena,
         minsBefore: Optional[int],
         template: Optional[str],
-        token: str,
     ) -> None:
         with self.db as conn:
             conn.execute("DELETE FROM scheduledMsgs WHERE arenaId = ?", (arena.id,))
             if minsBefore and minsBefore > 0 and template:
                 conn.execute(
-                    """INSERT INTO scheduledMsgs (arenaId, scheduleId, team, template, token, minutesBefore, sendTime)
-                            VALUES (?, ?, ?, ?, ?, ?, ?)
-                            """,
+                    """INSERT INTO scheduledMsgs (arenaId, scheduleId, team, template, minutesBefore, sendTime)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    """,
                     (
                         arena.id,
                         arena.scheduleId,
                         arena.team,
                         template,
-                        token,
                         minsBefore,
                         arena.time - minsBefore * 60,
                     ),
@@ -373,36 +361,67 @@ class Db:
             return (row["minutesBefore"], row["template"], row["team"])
         return None
 
-    def insert_bad_token(self, token: str, team: str) -> None:
+    def set_token_for_team(self, team: str, token: str, user: str) -> None:
         with self.db as conn:
             conn.execute(
-                "INSERT INTO badTokens (token, team) VALUES (?, ?)", (token, team)
+                "REPLACE INTO msgTokens (token, team, user, isBad, temporary) VALUES (?, ?, ?, false, false)",
+                (token, team, user),
             )
 
-    def bad_tokens(self) -> Set[Tuple[str, str]]:
-        return set(
-            (row["token"], row["team"])
-            for row in self._query("SELECT token, team FROM badTokens")
+    def token_for_team(self, team: str) -> Optional[str]:
+        row = self._query_one(
+            "SELECT token FROM msgTokens WHERE team = ? AND NOT isBad", (team,)
         )
+        if row:
+            return str(row["token"])
+        return None
 
-    def bad_tokens_for_team(self, team: str) -> Set[str]:
-        return set(
-            row["token"]
-            for row in self._query(
-                "SELECT token FROM badTokens WHERE team = ?", (team,)
-            )
-        )
-
-    def replace_token_for_team(self, team: str, token: str) -> None:
-        bad_tokens = self.bad_tokens_for_team(team)
+    def mark_bad_token(self, team: str, token: str) -> None:
         with self.db as conn:
-            for t in bad_tokens:
-                conn.execute(
-                    "UPDATE schedules SET msgToken = ? WHERE team = ? AND msgToken = ?",
-                    (token, team, t),
-                )
-                conn.execute(
-                    "UPDATE scheduledMsgs SET token = ? WHERE team = ? AND token = ?",
-                    (token, team, t),
-                )
-            conn.execute("DELETE FROM badTokens WHERE team = ?", (team,))
+            conn.execute(
+                "UPDATE msgTokens SET isBad = true WHERE token = ? AND team = ?)",
+                (token, team),
+            )
+
+    def token_state(self, team: str) -> dict:
+        row = self._query_one(
+            "SELECT user, isBad, temporary FROM msgTokens WHERE team = ?", (team,)
+        )
+
+        if not row:
+            if self.team_needs_token(team):
+                return {"issue": "missing"}
+            return {}
+        elif row["isBad"]:
+            return {"issue": "bad"}
+        elif row["temporary"]:
+            return {"issue": "temporary"}
+
+        return {"user": row["user"]}
+
+    def team_needs_token(self, team: str) -> bool:
+        result = self._query_one(
+            "SELECT COUNT(*) FROM scheduledMsgs WHERE team = ?",
+            (team,),
+        )
+        if result and int(result[0]) > 0:
+            return True
+
+        result = self._query_one(
+            "SELECT COUNT(*) FROM schedules WHERE team = ? AND msgMinutesBefore IS NOT NULL AND msgMinutesBefore > 0 AND msgTemplate IS NOT NULL",
+            (team,),
+        )
+        if result and int(result[0]) > 0:
+            return True
+
+        return False
+
+    def token_user(self, team: str) -> Optional[str]:
+        row = self._query_one(
+            "SELECT user, isBad FROM msgTokens WHERE team = ?", (team,)
+        )
+
+        if row and not row["isBad"]:
+            return row["user"]
+
+        return None

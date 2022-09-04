@@ -1,3 +1,7 @@
+import type { SimpleModalContext } from './simple-modal';
+import SetTokenDialog from './SetTokenDialog.svelte';
+import { API_HOST } from './config';
+
 export const SECS_IN_DAY = 24 * 60 * 60;
 
 export const formatTime = (time: number) => {
@@ -49,5 +53,49 @@ export const alertErrorResponse = async (resp: Response) => {
     else alert(`Error: ${json.name}\n\n${json.description}`);
   } catch {
     alert(`Error: ${await resp.text()}`);
+  }
+};
+
+export const createShowSetTokenDialogFn =
+  (modal: SimpleModalContext, onSetToken: () => void) => (team: string) => {
+    modal.open(
+      SetTokenDialog,
+      {
+        setToken: async (token: string) => {
+          const resp = await fetch(API_HOST + `/setToken/${team}`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ token }),
+          });
+          if (resp.ok) {
+            modal.close();
+            onSetToken();
+          } else await alertErrorResponse(resp);
+        },
+      },
+      {
+        closeButton: false,
+        styleContent: { padding: '24px' },
+        styleWindow: {
+          // background: 'var(--card-bg)',
+          // color: 'var(--text)',
+          width: '400px',
+        },
+      }
+    );
+  };
+
+export const fetchTokenUser = async (team: string, token: string) => {
+  const resp = await fetch(API_HOST + `/hasToken/${team}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (resp.ok) {
+    const j = await resp.json();
+    return j.exists;
+  } else {
+    console.error(
+      `Failed to check token validity: ${resp.status} ${resp.statusText}`
+    );
+    return true;
   }
 };

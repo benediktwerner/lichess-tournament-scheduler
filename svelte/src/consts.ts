@@ -1,4 +1,4 @@
-export const API_VERSION = 4;
+export const API_VERSION = 5;
 export const VARIANT_NAMES = {
   standard: 'Standard',
   chess960: 'Chess960',
@@ -24,3 +24,11 @@ export const SCHEDULE_NAMES = [
   'Every x months',
   'Specific weekday of each month',
 ];
+
+export const TOKEN_ISSUES = {
+  missing:
+    'This team does not have a valid message token but has scheduled team messages.',
+  bad: 'The message token for this team is invalid or expired.',
+  temporary:
+    'The message token for this team is temporary and will eventually expire. Please set a new permanent token:',
+} as Record<string, string>;

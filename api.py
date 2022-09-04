@@ -43,6 +43,11 @@ class Token:
     def expired(self) -> bool:
         return self.expires < time() - 24 * 60 * 60
 
+    def is_valid_msg_token_for_team(self, team: str) -> bool:
+        return (
+            not self.expired and self.allows_teams and team in leader_teams(self.userId)
+        )
+
 
 @dataclass(frozen=True)
 class Arena:
@@ -225,10 +230,10 @@ def update_link_to_next_arena(
     ).raise_for_status()
 
 
-def send_team_msg(msg: MsgToSend) -> None:
+def send_team_msg(msg: MsgToSend, token: str) -> None:
     requests.post(
         HOST + ENDPOINT_TEAM_PM.format(msg.team),
-        headers={"Authorization": f"Bearer {msg.token}"},
+        headers={"Authorization": f"Bearer {token}"},
         data={"message": msg.text()},
     ).raise_for_status()
 
