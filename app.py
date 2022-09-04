@@ -114,10 +114,13 @@ def setToken(team: str) -> Any:
     user.assert_for_team(team)
 
     j = request.json
-    if not j:
-        abort(400)
+    if not j or not isinstance(j, dict):
+        abort(400, description="Invalid request body")
 
     token = j.get("token")
+    if not token:
+        abort(400, desciption="Missing token")
+
     vToken = api.verify_token(token)
 
     if not vToken or not vToken.is_valid_msg_token_for_team(team):
