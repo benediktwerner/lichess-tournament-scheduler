@@ -69,7 +69,11 @@
   updateTokenUser();
 
   const modal = getContext<SimpleModalContext>('simple-modal');
-  const showSetTokenDialog = createShowSetTokenDialogFn(modal, updateTokenUser);
+  const showSetTokenDialog = createShowSetTokenDialogFn(
+    modal,
+    token,
+    updateTokenUser
+  );
 
   const handleSave = async () => {
     if (!form) return;

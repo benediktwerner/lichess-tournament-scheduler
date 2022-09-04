@@ -137,9 +137,13 @@
   };
 
   const modal = getContext<SimpleModalContext>('simple-modal');
-  const showSetTokenDialog = createShowSetTokenDialogFn(modal, async () => {
-    tokenStates = await fetchTokenState();
-  });
+  const showSetTokenDialog = createShowSetTokenDialogFn(
+    modal,
+    token,
+    async () => {
+      tokenStates = await fetchTokenState();
+    }
+  );
 
   load(true);
 </script>

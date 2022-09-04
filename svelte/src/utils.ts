@@ -57,14 +57,15 @@ export const alertErrorResponse = async (resp: Response) => {
 };
 
 export const createShowSetTokenDialogFn =
-  (modal: SimpleModalContext, onSetToken: () => void) => (team: string) => {
+  (modal: SimpleModalContext, postToken: string, onSetToken: () => void) =>
+  (team: string) => {
     modal.open(
       SetTokenDialog,
       {
         setToken: async (token: string) => {
           const resp = await fetch(API_HOST + `/setToken/${team}`, {
             method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${postToken}` },
             body: JSON.stringify({ token }),
           });
           if (resp.ok) {
