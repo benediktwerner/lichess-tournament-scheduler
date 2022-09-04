@@ -93,8 +93,9 @@ def scheduledMsg(id: str) -> Any:
 def tokenState() -> Any:
     user = auth()
     state = {}
+    teams = app.config["TEAMS_WHITELIST"] if user.is_admin else user.teams
     with Db() as db:
-        for team in user.teams:
+        for team in teams:
             state[team] = db.token_state(team)
     return jsonify(state)
 
