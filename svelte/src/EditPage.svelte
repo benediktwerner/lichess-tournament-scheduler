@@ -431,11 +431,12 @@
         </tr>
       {:else}
         <tr>
-          <td colspan="2">
+          <td />
+          <td>
             <span class="error">
               This team does not have a valid message token set up
             </span>
-            <button on:click={() => showSetTokenDialog(team)}>
+            <button type="button" on:click={() => showSetTokenDialog(team)}>
               Set a token
             </button>
           </td>

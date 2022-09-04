@@ -162,7 +162,7 @@
         {TOKEN_ISSUES[tokenState.issue] ||
           `The message token for this team has an unknown issue: ${tokenState.issue}`}
       </span>
-      <button on:click={() => showSetTokenDialog(team)}>
+      <button type="button" on:click={() => showSetTokenDialog(team)}>
         Set a new token
       </button>
       <br />
@@ -170,7 +170,9 @@
       Team messages for this team are currently being sent from <a
         href={`${LICHESS_HOST}/@/${tokenState.user}`}>@{tokenState.user}</a
       >
-      <button on:click={() => showSetTokenDialog(team)}>Change</button>
+      <button type="button" on:click={() => showSetTokenDialog(team)}
+        >Change</button
+      >
       <br />
     {/if}
     {#if arenas && arenas.length > 0}
@@ -193,10 +195,16 @@
             <td>in {formatUntil(arena.secondsToStart)}</td>
             <td>{arena.nbPlayers} players</td>
             <td>
-              <button on:click={() => gotoEditArena(arena.id, team)}>
+              <button
+                type="button"
+                on:click={() => gotoEditArena(arena.id, team)}
+              >
                 Edit
               </button>
-              <button on:click={() => handleCancel(team, arena.id)}>
+              <button
+                type="button"
+                on:click={() => handleCancel(team, arena.id)}
+              >
                 Cancel
               </button>
             </td>
@@ -204,7 +212,9 @@
         {/each}
       </table>
     {:else if showCreatedLoadingBtn}
-      <button on:click={() => loadCreatedForTeam(team)}>Load created</button>
+      <button type="button" on:click={() => loadCreatedForTeam(team)}
+        >Load created</button
+      >
     {/if}
     {#if schedules.length > 0}
       <h4>Scheduled tournaments</h4>

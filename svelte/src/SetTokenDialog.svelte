@@ -22,7 +22,7 @@ Log into the Lichess account that should send the messages, then visit
 <br />
 <br />
 
-<button on:click={() => setToken(token)}>Set Token</button>
+<button type="button" on:click={() => setToken(token)}>Set Token</button>
 
 <style>
   h2 {
