@@ -65,7 +65,10 @@ export const createShowSetTokenDialogFn =
         setToken: async (token: string) => {
           const resp = await fetch(API_HOST + `/setToken/${team}`, {
             method: 'POST',
-            headers: { Authorization: `Bearer ${postToken}` },
+            headers: {
+              Authorization: `Bearer ${postToken}`,
+              'Content-Type': 'application/json',
+            },
             body: JSON.stringify({ token }),
           });
           if (resp.ok) {
