@@ -253,7 +253,7 @@ class Db:
                     teamBattleLeaders = ?,
                     daysInAdvance = ?,
                     msgMinutesBefore = ?,
-                    msgTemplate = ?,
+                    msgTemplate = ?
                    WHERE id = ? and team = ?
                 """,
                 (
