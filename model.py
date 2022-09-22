@@ -52,7 +52,7 @@ class Schedule:
         return self.daysInAdvance or 1
 
     def team_battle_teams(self) -> List[str]:
-        return extract_team_battle_teams(self.team, self.teamBattleTeams)
+        return extract_team_battle_teams(self.teamBattleTeams)
 
     @staticmethod
     def from_json(j: dict) -> Schedule:
@@ -89,6 +89,13 @@ class Schedule:
         )
         if len(long_name) > 30:
             raise ParseError("The tournament is longer than 30 characters")
+
+        teamBattleTeams = get_opt_or_raise(j, "teamBattleTeams", str)
+        if teamBattleTeams and not extract_team_battle_teams(teamBattleTeams):
+            raise ParseError(
+                "Invalid or empty team battle teams list. Expected one line per team starting with either the team ID or team page URL."
+            )
+
         return Schedule(
             name,
             get_or_raise(j, "team", str),
@@ -108,7 +115,7 @@ class Schedule:
             get_or_raise(j, "scheduleTime", int),
             scheduleStart,
             get_opt_or_raise(j, "scheduleEnd", int),
-            get_opt_or_raise(j, "teamBattleTeams", str),
+            teamBattleTeams,
             get_opt_or_raise(j, "teamBattleLeaders", int),
             get_opt_or_raise(j, "daysInAdvance", int),
             get_opt_or_raise(j, "msgMinutesBefore", int),
@@ -244,7 +251,7 @@ class ArenaEdit:
     msgTemplate: Optional[str]
 
     def team_battle_teams(self) -> List[str]:
-        return extract_team_battle_teams(self.team, self.teamBattleTeams)
+        return extract_team_battle_teams(self.teamBattleTeams)
 
     @staticmethod
     def from_schedule(s: Schedule, id: str, at: int) -> ArenaEdit:
@@ -331,11 +338,18 @@ def get_opt_or_raise(j: dict, key: str, typ: type) -> Any:
     return val
 
 
-def extract_team_battle_teams(team: str, ts: Optional[str]) -> List[str]:
+def extract_team_battle_teams(ts: Optional[str]) -> List[str]:
     if not ts:
         return []
     teams = set(line.strip().split()[0] for line in ts.splitlines() if line.strip())
-    return [t for t in teams if re.match(r"^[\w-]{2,}$", t)]
+    result = []
+    for team in teams:
+        teamId = re.findall(r"^https://lichess.org/team/([\w-]{2,})$", team)
+        if teamId:
+            result.append(teamId[0])
+        elif re.match(r"^[\w-]{2,}$", team):
+            result.append(team)
+    return result
 
 
 def add_months(date: datetime, amnt: int) -> datetime:

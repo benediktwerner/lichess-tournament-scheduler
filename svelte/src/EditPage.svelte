@@ -396,7 +396,11 @@
       <tr>
         <td>Teams:</td>
         <td>
-          <small>(one per line, first part must be the team id)</small><br />
+          <small
+            >(one per line, first part must be the team id or team page URL,
+            rest of the line is ignored so you can copy from the Lichess team
+            battle editor which has auto-complete)</small
+          ><br />
           <textarea cols="50" rows="10" bind:value={teamBattleTeams} required />
         </td>
       </tr>
