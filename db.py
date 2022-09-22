@@ -10,7 +10,7 @@ from flask import Flask
 from model import CreatedArena, MsgToSend, Schedule, ScheduleWithId
 
 DATABASE = "database.sqlite"
-VERSION = 9
+VERSION = 10
 
 
 logger = logging.getLogger(__name__)
@@ -75,17 +75,20 @@ class Db:
         result = self._query(query, args)
         return result[0] if result else None
 
-    def insert_created(self, id: str, schedule_id: int, team: str, t: int) -> None:
+    def insert_created(
+        self, id: str, schedule_id: int, team: str, t: int, error: Optional[str] = None
+    ) -> None:
         with self.db as conn:
             conn.execute(
                 """INSERT INTO createdArenas (
                     id,
                     scheduleId,
                     team,
-                    time
-                   ) VALUES (?, ?, ?, ?)
+                    time,
+                    error
+                   ) VALUES (?, ?, ?, ?, ?)
                 """,
-                (id, schedule_id, team, t),
+                (id, schedule_id, team, t, error),
             )
 
     def update_created(self, arena: CreatedArena) -> None:
