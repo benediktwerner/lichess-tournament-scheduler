@@ -1,3 +1,9 @@
+import type { SimpleModalContext } from './simple-modal';
+import SetTokenDialog from './SetTokenDialog.svelte';
+import { API_HOST } from './config';
+
+export const SECS_IN_DAY = 24 * 60 * 60;
+
 export const formatTime = (time: number) => {
   const hours = Math.floor(time / 60)
     .toString()
@@ -6,6 +12,17 @@ export const formatTime = (time: number) => {
     .toString()
     .padStart(2, '0');
   return hours + ':' + mins;
+};
+
+export const formatDate = (t?: number) => {
+  if (!t) return '';
+  return new Date(t * 1000).toISOString().slice(0, 10);
+};
+
+export const formatEndDate = (t?: number) => {
+  if (!t) return '';
+  if (t % SECS_IN_DAY === 0) return formatDate(t - SECS_IN_DAY);
+  else return formatDate(t - (t % SECS_IN_DAY));
 };
 
 export const formatUntil = (seconds: number) => {
@@ -22,4 +39,69 @@ export const formatDuration = (minutes: number) => {
     return '1 hour';
   }
   return minutes + ' minutes';
+};
+
+export const sleep = async (delay: number) => {
+  await new Promise((resolve) => setTimeout(resolve, delay));
+};
+
+export const alertErrorResponse = async (resp: Response) => {
+  try {
+    const json = await resp.json();
+    if (!json.name || !json.description)
+      alert(`Error: ${JSON.stringify(json)}`);
+    else alert(`Error: ${json.name}\n\n${json.description}`);
+  } catch {
+    alert(`Error: ${await resp.text()}`);
+  }
+};
+
+export const createShowSetTokenDialogFn =
+  (modal: SimpleModalContext, postToken: string, onSetToken: () => void) =>
+  (team: string) => {
+    modal.open(
+      SetTokenDialog,
+      {
+        setToken: async (token: string) => {
+          const resp = await fetch(API_HOST + `/setToken/${team}`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${postToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ token }),
+          });
+          if (resp.ok) {
+            modal.close();
+            onSetToken();
+          } else await alertErrorResponse(resp);
+        },
+      },
+      {
+        closeButton: false,
+        styleContent: { padding: '24px' },
+        styleWindow: {
+          background: '#1c2435',
+          color: '#c9d1d9',
+        },
+      }
+    );
+  };
+
+export const fetchTokenUser = async (
+  team: string,
+  token: string
+): Promise<string | null> => {
+  const resp = await fetch(API_HOST + `/tokenUser/${team}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (resp.ok) {
+    const j = await resp.json();
+    return j.user;
+  } else {
+    console.error(
+      `Failed to check token validity: ${resp.status} ${resp.statusText}`
+    );
+    return null;
+  }
 };

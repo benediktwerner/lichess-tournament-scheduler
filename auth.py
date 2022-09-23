@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass
 from time import time
 from typing import Dict, List, Optional
 
-from flask import Flask, abort, current_app, request
+from flask import Flask, abort, request
 from requests import HTTPError
 
 import api
@@ -15,22 +16,26 @@ CACHE_SECS = 10 * 60
 RATE_LIMIT_TIMEOUT_SECS = 10 * 60
 
 
+logger = logging.getLogger(__name__)
+
+
 @dataclass
 class User:
     is_admin: bool
     teams: List[str]
+    token: str
 
-    def for_team(self, team: str) -> None:
+    def assert_for_team(self, team: str) -> None:
         if not self.is_admin and team not in self.teams:
             abort(403)
 
-    @staticmethod
-    def plain(teams: List[str]) -> User:
-        return User(False, teams)
+    def assert_admin(self) -> None:
+        if not self.is_admin:
+            abort(403)
 
-    @staticmethod
-    def admin() -> User:
-        return User(True, [])
+    def assert_leader_or_admin(self) -> None:
+        if not self.is_admin and not self.teams:
+            abort(403)
 
 
 @dataclass
@@ -77,6 +82,7 @@ class Auth:
 
         cached = self.get_from_cache(token)
         if cached:
+            cached.assert_leader_or_admin()
             return cached
 
         if self.rate_limited_until > time():
@@ -84,24 +90,19 @@ class Auth:
 
         try:
             res = api.verify_token(token)
-            if (
-                not res
-                or "tournament:write" not in res.scopes
-                or res.expires < time()
-            ):
+            if not res or res.expired or not res.allows_tournaments:
                 abort(403)
 
-            if res.userId in self.admins:
-                user = User.admin()
-            else:
-                teams = [
-                    team for team in api.leader_teams(res.userId) if team in self.teams
-                ]
-                user = User.plain(teams)
+            teams = [
+                team for team in api.leader_teams(res.userId) if team in self.teams
+            ]
+            admin = res.userId in self.admins
+            user = User(admin, teams, token)
             self.add_cache(token, user)
+            user.assert_leader_or_admin()
             return user
         except HTTPError as e:
-            current_app.logger.error(f"Error during auth requests to Lichess: {e}")
+            logger.error(f"Error during auth requests to Lichess: {e}")
             if e.response.status_code == 429:
                 self.rate_limited_until = int(time()) + RATE_LIMIT_TIMEOUT_SECS
                 abort(503)

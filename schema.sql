@@ -1,12 +1,12 @@
-CREATE TABLE IF NOT EXISTS schedules (
-    id INTEGER NOT NULL PRIMARY KEY,
-    scheduleDay INT NOT NULL, -- 0 every day, 1-7 on that weekday
+CREATE TABLE schedules (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    scheduleDay INT NOT NULL, -- 0 every day, 1-7 on that weekday, 1xxx every xxx days, 2xxx every xxx weeks, 3xxx every xxx months, 100ab every a-th weekday b of the month (a == 4 means always the last)
     scheduleTime INT NOT NULL, -- in UTC minutes
     scheduleStart INT, -- unix time in secs when to first schedule this tournament
     scheduleEnd INT, -- unix time in secs when to stop scheduling this tournament
     name TEXT NOT NULL,
     team TEXT NOT NULL,
-    clock INT NOT NULL,
+    clock FLOAT NOT NULL,
     increment INT NOT NULL,
     minutes INT NOT NULL,
     variant TEXT NOT NULL,
@@ -17,11 +17,35 @@ CREATE TABLE IF NOT EXISTS schedules (
     description TEXT,
     minRating INT,
     maxRating INT,
-    minGames INT
+    minGames INT,
+    teamBattleTeams TEXT,
+    teamBattleLeaders INT,
+    daysInAdvance INT,
+    msgMinutesBefore INT,
+    msgTemplate TEXT
 );
 
-CREATE TABLE IF NOT EXISTS createdArenas (
+CREATE TABLE createdArenas (
     id TEXT NOT NULL,
+    scheduleId INT NOT NULL,
     team TEXT NOT NULL,
-    time INT NOT NULL
+    time INT NOT NULL,
+    error TEXT
+);
+
+CREATE TABLE scheduledMsgs (
+    arenaId TEXT NOT NULL,
+    scheduleId INT NOT NULL,
+    team TEXT NOT NULL,
+    template TEXT NOT NULL,
+    minutesBefore INT NOT NULL,
+    sendTime INT NOT NULL
+);
+
+CREATE TABLE msgTokens (
+    token TEXT NOT NULL,
+    team TEXT NOT NULL UNIQUE,
+    user TEXT NOT NULL,
+    isBad BOOLEAN NOT NULL,
+    temporary BOOLEAN NOT NULL
 );

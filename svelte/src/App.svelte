@@ -1,7 +1,12 @@
 <script lang="ts">
-  import { OAuth2AuthCodePKCE } from '@bity/oauth2-auth-code-pkce';
-  import { LICHESS_HOST } from './config';
-  import Inner from './Inner.svelte';
+  import {
+    OAuth2AuthCodePKCE,
+    type AccessContext,
+  } from '@bity/oauth2-auth-code-pkce';
+  import Modal from 'svelte-simple-modal';
+  import { API_HOST, LICHESS_HOST } from './config';
+  import { API_VERSION } from './consts';
+  import Router from './Router.svelte';
 
   const baseUrl = () => {
     const url = new URL(location.href);
@@ -19,9 +24,36 @@
     onInvalidGrant: (_retry) => {},
   });
 
-  const loadAccessContext = () => {
+  const loadAccessContext = (): AccessContext | null => {
     const ctx = localStorage.getItem('token');
     return ctx ? JSON.parse(ctx) : null;
+  };
+
+  const loadUsername = async (): Promise<string> => {
+    const name = localStorage.getItem('username');
+    if (name) return name;
+
+    const token = accessContext?.token?.value;
+    if (!token) return '';
+
+    const resp = await fetch(`${LICHESS_HOST}/api/account`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (resp.ok) {
+      const json = await resp.json();
+      const username = json['username'];
+      if (username) {
+        localStorage.setItem('username', username);
+        return username;
+      }
+    } else {
+      console.error(
+        `Failed to fetch username: ${resp.status} ${resp.statusText}`
+      );
+    }
+
+    return '';
   };
 
   const handleLogin = async () => {
@@ -31,9 +63,10 @@
 
   const handleLogout = async () => {
     const token = accessContext?.token?.value;
-    localStorage.removeItem('token');
-    accessContext = undefined;
-    error = undefined;
+
+    localStorage.clear();
+    accessContext = null;
+    error = null;
 
     await fetch(`${LICHESS_HOST}/api/token`, {
       method: 'DELETE',
@@ -45,42 +78,56 @@
 
   const init = async () => {
     try {
-      const hasAuthCode = await oauth.isReturningFromAuthServer();
-      if (hasAuthCode) {
+      const resp = await fetch(API_HOST + '/version');
+      const ver = parseInt(await resp.text(), 10);
+      if (ver > API_VERSION) {
+        error =
+          'The frontend is out-of-date, probably due to caching. Please do a hard-reload using Ctrl+F5 or Cmd+F5 or Ctrl+Shift+R or Cmd+Shift+R';
+      } else outdated = false;
+
+      if (await oauth.isReturningFromAuthServer()) {
         accessContext = await oauth.getAccessToken();
+        localStorage.clear();
         localStorage.setItem('token', JSON.stringify(accessContext));
         history.pushState(null, '', baseUrl());
       }
+
+      userName = await loadUsername();
     } catch (err) {
-      error = err;
+      error = '' + err;
     }
   };
 
-  let error = null;
-  let accessContext = loadAccessContext();
+  let error: string | null = null;
+  let accessContext: AccessContext | null = loadAccessContext();
+  let userName = '';
+  let outdated = true;
   init();
 </script>
 
-<h1>Lichess Tournament Scheduler</h1>
+<Modal>
+  <h1>Lichess Tournament Scheduler</h1>
 
-{#if accessContext?.token}
-  <button class="logout" type="button" on:click={handleLogout}>Logout</button>
-  <Inner token={accessContext.token.value} />
-{:else}
-  <button type="button" on:click={handleLogin}>Login with Lichess</button>
-{/if}
+  {#if !outdated}
+    {#if accessContext?.token}
+      <div class="logout">
+        {userName}
+        <button type="button" on:click={handleLogout}>Logout</button>
+      </div>
+      <Router token={accessContext.token.value} />
+    {:else}
+      <button type="button" on:click={handleLogin}>Login with Lichess</button>
+    {/if}
+  {/if}
 
-{#if error}
-  <div class="error">{error}</div>
-{/if}
+  {#if error}
+    <div class="error">{error}</div>
+  {/if}
+</Modal>
 
 <style lang="scss">
   :global {
     @import './global.scss';
-  }
-
-  .error {
-    color: red;
   }
 
   .logout {
