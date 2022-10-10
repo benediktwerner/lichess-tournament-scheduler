@@ -37,7 +37,7 @@ class Token:
 
     @property
     def allows_teams(self) -> bool:
-        return "team:write" in self.scopes
+        return "team:lead" in self.scopes
 
     @property
     def expired(self) -> bool:

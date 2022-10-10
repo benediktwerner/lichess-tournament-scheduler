@@ -20,7 +20,7 @@ def token_test() -> Any:
             token: {
                 "userId": "benwerner",
                 "expires": int(time() * 1000) + 60 * 60 * 1000,
-                "scopes": "tournament:write,team:write",
+                "scopes": "tournament:write",
             }
         }
     )
