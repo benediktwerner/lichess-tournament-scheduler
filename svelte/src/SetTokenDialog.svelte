@@ -8,9 +8,8 @@
 
 Log into the Lichess account that should send the messages, then visit
 <a
-  href="https://lichess.org/account/oauth/token/create?scopes[]=team:write&description=Variant+Team+Tournament+Scheduler+Message+Token"
->
-  this page</a
+  href="https://lichess.org/account/oauth/token/create?scopes[]=team:lead&description=Variant+Team+Tournament+Scheduler+Message+Token"
+  >this page</a
 >, create the token, and paste it here:
 
 <br />
