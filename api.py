@@ -28,7 +28,7 @@ BOOL = ["false", "true"]
 @dataclass
 class Token:
     userId: str
-    expires: int
+    expires: Optional[int]
     scopes: List[str]
 
     @property
@@ -41,7 +41,7 @@ class Token:
 
     @property
     def expired(self) -> bool:
-        return self.expires < time() - 24 * 60 * 60
+        return self.expires is not None and self.expires < time() - 24 * 60 * 60
 
     def is_valid_msg_token_for_team(self, team: str) -> bool:
         return (
@@ -65,7 +65,10 @@ def verify_token(t: str) -> Optional[Token]:
     tt = res.json()[t]
     if not tt:
         return None
-    return Token(tt["userId"], tt["expires"] // 1000, tt["scopes"].split(","))
+    expires = tt.get("expires")
+    if expires is not None:
+        expires //= 1000
+    return Token(tt["userId"], expires, tt["scopes"].split(","))
 
 
 def leader_teams(userId: str) -> List[str]:
