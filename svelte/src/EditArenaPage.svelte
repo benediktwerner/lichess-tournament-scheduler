@@ -110,7 +110,7 @@
   };
 </script>
 
-<h2>Edit <a href="https://lihcess.org/tournament/{arena.id}">arena</a></h2>
+<h2>Edit <a href="https://lichess.org/tournament/{arena.id}">arena</a></h2>
 
 <form bind:this={form}>
   <table class="form-table">
