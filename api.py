@@ -112,7 +112,7 @@ def schedule_arena(
     if s.maxRating:
         data["conditions.maxRating.rating"] = s.maxRating
     if s.minGames:
-        data["conditions.nbRatedGames.nb"] = s.minGames
+        data["conditions.nbRatedGame.nb"] = s.minGames
 
     resp = requests.post(
         HOST + ENDPOINT_CREATE_ARENA,
@@ -184,7 +184,7 @@ def update_arena(
     if arena.maxRating:
         data["conditions.maxRating.rating"] = arena.maxRating
     if arena.minGames:
-        data["conditions.nbRatedGames.nb"] = arena.minGames
+        data["conditions.nbRatedGame.nb"] = arena.minGames
 
     resp = requests.post(
         HOST + ENDPOINT_UPDATE_ARENA.format(arena.id),
@@ -220,7 +220,7 @@ def update_link_to_next_arena(
         "description": format_description(desc, prev, nxt, name, at, nth),
     }
     if "minGames" in arena:
-        data["conditions.nbRatedGames.nb"] = arena["minRatedGames"]["nb"]
+        data["conditions.nbRatedGame.nb"] = arena["minRatedGames"]["nb"]
     if "minRating" in arena:
         data["conditions.minRating.rating"] = arena["minRating"]["rating"]
     if "maxRating" in arena:
