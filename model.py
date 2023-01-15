@@ -77,8 +77,8 @@ class Schedule:
                 raise ParseError(f"Invalid weekday ordinal: {scheduleDay}")
         name = get_or_raise(j, "name", str)
         long_name = re.sub(
-            r"{weekOfMonth(?:\|([.*?]))*}",
-            lambda m: max(map(len, m.groups()), default=1),
+            r"{weekOfMonth(?:\|(.*?))*}",
+            lambda m: max(m.groups(), key=len, default="1"),
             re.sub(
                 r"{n\+\d+}",
                 "42",

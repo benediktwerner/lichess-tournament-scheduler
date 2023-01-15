@@ -253,7 +253,7 @@ def replace_week_of_month(s: str, date: datetime) -> str:
             return groups[week]
         return str(week + 1)
 
-    return re.sub(r"{weekOfMonth(?:\|([.*?]))*}", f, s)
+    return re.sub(r"{weekOfMonth(?:\|(.*?))*}", f, s)
 
 
 def format_name(name: str, at: int, nth: int) -> str:
