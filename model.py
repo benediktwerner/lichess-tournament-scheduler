@@ -77,14 +77,18 @@ class Schedule:
                 raise ParseError(f"Invalid weekday ordinal: {scheduleDay}")
         name = get_or_raise(j, "name", str)
         long_name = re.sub(
-            r"{n\+\d+}",
-            "42",
+            r"{weekOfMonth(?:\|([.*?]))*}",
+            lambda m: max(map(len, m.groups()), default=1),
             re.sub(
-                r"{nth\+\d+}",
-                "42nd",
-                name.replace("{n}", "42")
-                .replace("{nth}", "42nd")
-                .replace("{month}", "Jan."),
+                r"{n\+\d+}",
+                "42",
+                re.sub(
+                    r"{nth\+\d+}",
+                    "42nd",
+                    name.replace("{n}", "42")
+                    .replace("{nth}", "42nd")
+                    .replace("{month}", "Jan."),
+                ),
             ),
         )
         if len(long_name) > 30:
