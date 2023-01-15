@@ -242,15 +242,18 @@ def send_team_msg(msg: MsgToSend, token: str) -> None:
     ).raise_for_status()
 
 
-def week_of_month_replacer(date: datetime) -> Callable[[re.Match], str]:
+def replace_week_of_month(s: str, date: datetime) -> str:
     def f(m: re.Match) -> str:
-        if m.group(1) is not None:
-            days = calendar.monthrange(date.year, date.month)[1]
-            if date.day > days - 7:
-                return cast(str, m.group(1))
-        return str((date.day - 1) // 7 + 1)
+        week = (date.day - 1) // 7
+        groups = cast(Tuple[str, ...], m.groups())
+        if groups:
+            daysInMonth = calendar.monthrange(date.year, date.month)[1]
+            if date.day > daysInMonth - 7:
+                return groups[-1]
+            return groups[week]
+        return str(week + 1)
 
-    return f
+    return re.sub(r"{weekOfMonth(?:\|([.*?]))*}", f, s)
 
 
 def format_name(name: str, at: int, nth: int) -> str:
@@ -259,7 +262,7 @@ def format_name(name: str, at: int, nth: int) -> str:
     name = name.replace("{nth}", format_nth(nth))
     name = re.sub(r"{n\+(\d+)}", lambda m: str(nth + int(m.group(1))), name)
     name = re.sub(r"{nth\+(\d+)}", lambda m: format_nth(nth + int(m.group(1))), name)
-    name = re.sub(r"{weekOfMonth(?:\|([.*?]))?}", week_of_month_replacer(date), name)
+    name = replace_week_of_month(name, date)
     name_long = name.replace("{month}", f"{date:%B}")
     if len(name_long) <= 30:
         return name_long
@@ -283,7 +286,7 @@ def format_description(
     desc = desc.replace("{nth}", format_nth(nth))
     desc = re.sub(r"{n\+(\d+)}", lambda m: str(nth + int(m.group(1))), desc)
     desc = re.sub(r"{nth\+(\d+)}", lambda m: format_nth(nth + int(m.group(1))), desc)
-    desc = re.sub(r"{weekOfMonth(?:\|([.*?]))?}", week_of_month_replacer(date), desc)
+    desc = replace_week_of_month(desc, date)
     desc = desc.replace("{name}", name)
     return desc
 

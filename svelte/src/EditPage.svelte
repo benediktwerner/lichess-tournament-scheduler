@@ -169,10 +169,12 @@
           inside the month that the tournament takes place in. Use
           <code>{'{weekOfMonth|Final}'}</code>
           to insert "Final" (can be replaced with any arbitrary string) if it's the
-          last week of the month. A "week" in this context just means any 7 days
-          in a row i.e. the first week are the first 7 days of the month and the
-          last are the last 7 days. This means the first/last of each weekday in
-          the month will be in the first/last week by this definition.
+          last week of the month. Use
+          <code>{'{weekOfMonth|1st|2nd|3rd|Final}'}</code>
+          to insert "1st" for the first week etc. A "week" in this context just means
+          any 7 days in a row i.e. the first week are the first 7 days of the month
+          and the last are the last 7 days. This means the first/last of each weekday
+          in the month will be in the first/last week by this definition.
           <br />
           Use <code>{'{n}'}</code> to insert the number this tournament has in
           the series. Use <code>{'{nth}'}</code> to insert it as an ordinal i.e.
