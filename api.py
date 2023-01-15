@@ -250,7 +250,8 @@ def replace_week_of_month(s: str, date: datetime) -> str:
             daysInMonth = calendar.monthrange(date.year, date.month)[1]
             if date.day > daysInMonth - 7:
                 return groups[-1]
-            return groups[week]
+            if len(groups) > week:
+                return groups[week]
         return str(week + 1)
 
     return re.sub(r"{weekOfMonth(?:\|(.*?))*}", f, s)
