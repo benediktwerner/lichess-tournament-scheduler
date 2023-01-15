@@ -170,7 +170,7 @@
           <code>{'{weekOfMonth|Final}'}</code>
           to insert "Final" (can be replaced with any arbitrary string) if it's the
           last week of the month. Use
-          <code>{'{weekOfMonth|1st|2nd|3rd|Final}'}</code>
+          <code>{'{weekOfMonth|1st|2nd|3rd|4th|Final}'}</code>
           to insert "1st" for the first week etc. A "week" in this context just means
           any 7 days in a row i.e. the first week are the first 7 days of the month
           and the last are the last 7 days. This means the first/last of each weekday
