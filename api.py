@@ -1,10 +1,11 @@
 from __future__ import annotations
+import calendar
 
 import re
 from dataclasses import dataclass
 from datetime import datetime
 from time import time
-from typing import List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple, cast
 
 import requests
 
@@ -241,12 +242,24 @@ def send_team_msg(msg: MsgToSend, token: str) -> None:
     ).raise_for_status()
 
 
+def week_of_month_replacer(date: datetime) -> Callable[[re.Match], str]:
+    def f(m: re.Match) -> str:
+        if m.group(1) is not None:
+            days = calendar.monthrange(date.year, date.month)[1]
+            if date.day > days - 7:
+                return cast(str, m.group(1))
+        return str((date.day - 1) // 7 + 1)
+
+    return f
+
+
 def format_name(name: str, at: int, nth: int) -> str:
     date = datetime.utcfromtimestamp(at)
     name = name.replace("{n}", str(nth))
     name = name.replace("{nth}", format_nth(nth))
     name = re.sub(r"{n\+(\d+)}", lambda m: str(nth + int(m.group(1))), name)
     name = re.sub(r"{nth\+(\d+)}", lambda m: format_nth(nth + int(m.group(1))), name)
+    name = re.sub(r"{weekOfMonth(?:\|([.*?]))?}", week_of_month_replacer(date), name)
     name_long = name.replace("{month}", f"{date:%B}")
     if len(name_long) <= 30:
         return name_long
@@ -270,6 +283,7 @@ def format_description(
     desc = desc.replace("{nth}", format_nth(nth))
     desc = re.sub(r"{n\+(\d+)}", lambda m: str(nth + int(m.group(1))), desc)
     desc = re.sub(r"{nth\+(\d+)}", lambda m: format_nth(nth + int(m.group(1))), desc)
+    desc = re.sub(r"{weekOfMonth(?:\|([.*?]))?}", week_of_month_replacer(date), desc)
     desc = desc.replace("{name}", name)
     return desc
 

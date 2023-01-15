@@ -4,7 +4,7 @@
   import { API_HOST, DEFAULT_VARIANT, LICHESS_HOST } from './config';
   import { SCHEDULE_NAMES, VARIANT_NAMES } from './consts';
   import type { SimpleModalContext } from './simple-modal';
-  import type { Schedule } from './types';
+  import type { Schedule, Dict } from './types';
   import {
     alertErrorResponse,
     createShowSetTokenDialogFn,
@@ -29,7 +29,8 @@
   let clock = schedule?.clock ?? 3;
   let increment = schedule?.increment ?? 0;
   let minutes = schedule?.minutes ?? 60;
-  let variant = schedule?.variant ?? (DEFAULT_VARIANT[team] || 'standard');
+  let variant =
+    schedule?.variant ?? ((DEFAULT_VARIANT as Dict)[team] || 'standard');
   let rated = schedule?.rated ?? true;
   let berserkable = schedule?.berserkable ?? true;
   let streakable = schedule?.streakable ?? true;
@@ -164,6 +165,15 @@
           Use <code>{'{month}'}</code> to insert the month in which the arena
           takes place.
           <br />
+          Use <code>{'{weekOfMonth}'}</code> to insert the number of the week
+          inside the month that the tournament takes place in. Use
+          <code>{'{weekOfMonth|Final}'}</code>
+          to insert "Final" (can be replaced with any arbitrary string) if it's the
+          last week of the month. A "week" in this context just means any 7 days
+          in a row i.e. the first week are the first 7 days of the month and the
+          last are the last 7 days. This means the first/last of each weekday in
+          the month will be in the first/last week by this definition.
+          <br />
           Use <code>{'{n}'}</code> to insert the number this tournament has in
           the series. Use <code>{'{nth}'}</code> to insert it as an ordinal i.e.
           including the `rd` in `3rd`. Use <code>{'{n+5}'}</code> and
@@ -183,7 +193,8 @@
           series: <code>[Next tournament](next)</code>
           <br />
           Use <code>{'{name}'}</code> to insert the name of the tournament. You
-          can also use <code>{'{month}'}</code>, <code>{'{n}'}</code>, and
+          can also use <code>{'{month}'}</code>, <code>{'{weekOfMonth}'}</code>,
+          <code>{'{n}'}</code>, and
           <code>{'{nth}'}</code> as above.
         </small>
       </td>

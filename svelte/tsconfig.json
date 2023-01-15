@@ -3,13 +3,9 @@
 
   "compilerOptions": {
     "strict": true,
-    "strictFunctionTypes": true,
-    "strictPropertyInitialization": true,
     "noFallthroughCasesInSwitch": true,
-    "noImplicitAny": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
-    "noImplicitThis": true,
     "noUncheckedIndexedAccess": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true

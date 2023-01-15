@@ -113,3 +113,7 @@ export interface TokenState {
   issue?: string;
   user?: string;
 }
+
+export interface Dict {
+  [key: string]: string | undefined;
+}
