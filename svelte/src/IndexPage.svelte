@@ -144,7 +144,7 @@
     }
     const n = Math.floor(day / 10) % 10;
     const weekday = day % 10;
-    return `${n === 4 ? 'Last' : formatOrdinal(n)} ${
+    return `${n === 4 ? 'Last' : formatOrdinal(n + 1)} ${
       WEEKDAY_NAMES[weekday]
     } of month`;
   };
