@@ -7,10 +7,16 @@
     formatDate,
     formatDuration,
     formatEndDate,
+    formatOrdinal,
     formatTime,
     formatUntil,
   } from './utils';
-  import { SCHEDULE_NAMES, TOKEN_ISSUES, VARIANT_NAMES } from './consts';
+  import {
+    SCHEDULE_NAMES,
+    TOKEN_ISSUES,
+    VARIANT_NAMES,
+    WEEKDAY_NAMES,
+  } from './consts';
   import { getContext } from 'svelte';
   import type { SimpleModalContext } from './simple-modal';
 
@@ -131,9 +137,16 @@
 
   const formatSchedule = (day: number) => {
     if (day < 8) return SCHEDULE_NAMES[day];
-    const unit = ['days', 'weeks', 'months'][Math.floor(day / 1000) - 1];
-    const period = day % 1000;
-    return `Every ${period} ${unit}`;
+    if (day < 10_000) {
+      const unit = ['days', 'weeks', 'months'][Math.floor(day / 1000) - 1];
+      const period = day % 1000;
+      return `Every ${period} ${unit}`;
+    }
+    const n = Math.floor(day / 10) % 10;
+    const weekday = day % 10;
+    return `${n === 4 ? 'Last' : formatOrdinal(n)} ${
+      WEEKDAY_NAMES[weekday]
+    } of month`;
   };
 
   const modal = getContext<SimpleModalContext>('simple-modal');

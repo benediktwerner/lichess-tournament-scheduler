@@ -24,6 +24,15 @@ export const SCHEDULE_NAMES = [
   'Every x months',
   'Specific weekday of each month',
 ];
+export const WEEKDAY_NAMES = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
 
 export const TOKEN_ISSUES = {
   missing:

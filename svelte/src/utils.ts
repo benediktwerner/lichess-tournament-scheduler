@@ -41,6 +41,13 @@ export const formatDuration = (minutes: number) => {
   return minutes + ' minutes';
 };
 
+export const formatOrdinal = (n: number) => {
+  if (n % 10 === 1 && n % 100 !== 11) return n + 'st';
+  if (n % 10 === 2 && n % 100 !== 12) return n + 'nd';
+  if (n % 10 === 3 && n % 100 !== 13) return n + 'rd';
+  return n + 'th';
+};
+
 export const sleep = async (delay: number) => {
   await new Promise((resolve) => setTimeout(resolve, delay));
 };

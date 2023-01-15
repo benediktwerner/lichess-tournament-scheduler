@@ -1,6 +1,12 @@
 CREATE TABLE schedules (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    scheduleDay INT NOT NULL, -- 0 every day, 1-7 on that weekday, 1xxx every xxx days, 2xxx every xxx weeks, 3xxx every xxx months, 100ab every a-th weekday b of the month (a == 4 means always the last)
+    scheduleDay INT NOT NULL,
+    -- 0 every day
+    -- 1-7 on that weekday (Mon-Sun)
+    -- 1xxx every xxx days
+    -- 2xxx every xxx weeks
+    -- 3xxx every xxx months
+    -- 100ab every a-th weekday b of the month (a == 4 means always the last, b == 0 means Monday)
     scheduleTime INT NOT NULL, -- in UTC minutes
     scheduleStart INT, -- unix time in secs when to first schedule this tournament
     scheduleEnd INT, -- unix time in secs when to stop scheduling this tournament
