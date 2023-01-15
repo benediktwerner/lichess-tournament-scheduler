@@ -62,12 +62,14 @@ class SchedulerThread(Thread):
                                 f"Response: {response.status_code} {response.text}"
                             )
                             if response.status_code == 429:
-                                self.arenas_rate_limited_until = now + 60 * 60
+                                self.arenas_rate_limited_until = int(time()) + 60 * 60
                                 return
                         except Exception:
                             pass
 
-                    db.insert_created(id, s.id, s.team, nxt, str(e))
+                    db.insert_created(
+                        f"failed-{int(time())}", s.id, s.team, nxt, str(e)
+                    )
                     sleep(10)
                     continue
 
