@@ -1,5 +1,5 @@
-ALTER TABLE createdArenas
+ALTER TABLE schedules
   ADD teamBattleAlternativeTeamsEnabled BOOLEAN;
 
-ALTER TABLE createdArenas
+ALTER TABLE schedules
   ADD teamBattleAlternativeTeams TEXT;
