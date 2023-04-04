@@ -424,16 +424,18 @@
             rows="20"
             bind:value={teamBattleTeams}
             required
-          />
+          /><br />
           <input
             type="checkbox"
             bind:checked={teamBattleAlternativeTeamsEnabled}
             id="teamBattleAlternativeTeamsEnabled"
-          /><label for="teamBattleAlternativeTeamsEnabled"
+          />
+          <label for="teamBattleAlternativeTeamsEnabled"
             >Use different teams list if the tournament is in the last week of
             the month</label
           >
           {#if teamBattleAlternativeTeamsEnabled}
+            <br />
             <textarea
               cols="100"
               rows="10"
