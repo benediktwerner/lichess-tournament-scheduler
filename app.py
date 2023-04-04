@@ -6,10 +6,10 @@ import json
 import logging
 from collections import defaultdict
 from time import time
-from typing import Any
+from typing import Any, DefaultDict, Dict, List, cast
 
 from flask import Flask, abort, jsonify, request
-from flask.logging import default_handler
+from flask.logging import default_handler  # pyright: ignore
 from flask_cors import CORS
 from werkzeug.exceptions import HTTPException
 
@@ -23,11 +23,15 @@ OK_RESPONSE = '{"ok":true}'
 API_VERSION = "5"
 
 root = logging.getLogger()
-root.addHandler(default_handler)
+root.addHandler(default_handler)  # pyright: ignore
 
 app = Flask(__name__)
 app.config.from_pyfile("config.py")
 app.logger.setLevel(logging.INFO)
+
+LICHESS_API_KEY = cast(str, app.config["LICHESS_API_KEY"])
+TEAMS_WHITELIST = cast(List[str], app.config["TEAMS_WHITELIST"])
+ADMINS = cast(List[str], app.config["ADMINS"])
 
 try:
     CORS(app)
@@ -40,8 +44,8 @@ try:
 
     create_tables()
 
-    auth = Auth(app)
-    SchedulerThread(app.config["LICHESS_API_KEY"]).start()
+    auth = Auth(ADMINS, TEAMS_WHITELIST)
+    SchedulerThread(LICHESS_API_KEY).start()
 
 except Exception as e:
     app.logger.error(f"Exception during startup: {e}")
@@ -70,10 +74,10 @@ def version() -> str:
 def schedules() -> Any:
     user = auth()
     with Db() as db:
-        by_team = defaultdict(list)
+        by_team: DefaultDict[str, List[ScheduleWithId]] = defaultdict(list)
         for s in db.schedules():
             by_team[s.team].append(s)
-        teams = app.config["TEAMS_WHITELIST"] if user.is_admin else user.teams
+        teams = TEAMS_WHITELIST if user.is_admin else user.teams
         return jsonify([(team, by_team[team]) for team in teams])
 
 
@@ -93,7 +97,7 @@ def scheduledMsg(id: str) -> Any:
 def tokenState() -> Any:
     user = auth()
     state = {}
-    teams = app.config["TEAMS_WHITELIST"] if user.is_admin else user.teams
+    teams = TEAMS_WHITELIST if user.is_admin else user.teams
     with Db() as db:
         for team in teams:
             state[team] = db.token_state(team)
@@ -117,9 +121,9 @@ def setToken(team: str) -> Any:
     if not j or not isinstance(j, dict):
         abort(400, description="Invalid request body")
 
-    token = j.get("token")
-    if not token:
-        abort(400, desciption="Missing token")
+    token = cast(Dict[str, object], j).get("token")
+    if not token or not isinstance(token, str):
+        abort(400, desciption="Missing or invalid token")
 
     vToken = api.verify_token(token)
 
@@ -135,7 +139,7 @@ def setToken(team: str) -> Any:
 @app.route("/createdUpcomingIds")
 def createdUpcomingIds() -> Any:
     auth()
-    by_team = defaultdict(list)
+    by_team: DefaultDict[str, List[str]] = defaultdict(list)
     with Db() as db:
         for id, team in db.created_upcoming():
             by_team[team].append(id)
@@ -195,7 +199,7 @@ def edit() -> str:
                 upcoming[i - 1][0] if i > 0 else prev,
                 upcoming[i + 1][0] if i + 1 < len(upcoming) else None,
                 nth + i + 1,
-                app.config["LICHESS_API_KEY"],
+                LICHESS_API_KEY,
             )
             if err is not None:
                 abort(500, description=f"Failed to update tournament {id}: {err}")
@@ -206,7 +210,7 @@ def edit() -> str:
                         id,
                         schedule.team_battle_teams(at),
                         schedule.teamBattleLeaders,
-                        app.config["LICHESS_API_KEY"],
+                        LICHESS_API_KEY,
                     )
                 except Exception as e:
                     app.logger.error(f"Failed to update arena teams: {e}")
@@ -239,7 +243,7 @@ def editArena() -> str:
                 description="This tournament either doesn't exist or wasn't created by the scheduler",
             )
 
-    err = api.update_arena(arena, None, None, 0, app.config["LICHESS_API_KEY"])
+    err = api.update_arena(arena, None, None, 0, LICHESS_API_KEY)
     if err is not None:
         abort(500, description=f"Failed to edit tournament: {err}")
 
@@ -255,7 +259,7 @@ def editArena() -> str:
                 arena.id,
                 arena.team_battle_teams(),
                 arena.teamBattleLeaders,
-                app.config["LICHESS_API_KEY"],
+                LICHESS_API_KEY,
             )
         except Exception as e:
             app.logger.error(f"Failed to update arena teams: {e}")
@@ -290,7 +294,7 @@ def cancel(id: str) -> str:
             )
         auth().assert_for_team(arena.team)
         try:
-            api.terminate_arena(id, app.config["LICHESS_API_KEY"])
+            api.terminate_arena(id, LICHESS_API_KEY)
         except Exception as e:
             app.logger.error(f"Failed to cancel tournament: {e}")
             abort(500, description="Failed to cancel tournament")

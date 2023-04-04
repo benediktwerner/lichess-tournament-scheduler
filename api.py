@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 from time import time
-from typing import Callable, List, Optional, Tuple, cast
+from typing import List, Optional, Tuple, cast
 
 import requests
 
@@ -48,16 +48,6 @@ class Token:
         return (
             not self.expired and self.allows_teams and team in leader_teams(self.userId)
         )
-
-
-@dataclass(frozen=True)
-class Arena:
-    name: str
-    time: int
-
-    @staticmethod
-    def from_json(s: dict) -> Arena:
-        return Arena(s["fullName"], s["startsAt"] // 1000)
 
 
 def verify_token(t: str) -> Optional[Token]:
@@ -243,7 +233,7 @@ def send_team_msg(msg: MsgToSend, token: str) -> None:
 
 
 def replace_week_of_month(s: str, date: datetime) -> str:
-    def f(m: re.Match) -> str:
+    def f(m: re.Match[str]) -> str:
         week = (date.day - 1) // 7
         groups = cast(Tuple[str, ...], m.groups())
         if groups:

@@ -15,6 +15,7 @@
 ## Dev
 
 - Dev server: `FLASK_ENV=development flask run --no-reload` (reloading would create multiple scheduler threads)
+- Python type checking: `pyright` (install with `pip install pyright`)
 - Svelte dev: `cd svelte; npm run dev`
 
 ## License

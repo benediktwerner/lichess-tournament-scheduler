@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from time import time
 from typing import Dict, List, Optional
 
-from flask import Flask, abort, request
+from flask import abort, request
 from requests import HTTPError
 
 import api
@@ -45,10 +45,10 @@ class CacheEntry:
 
 
 class Auth:
-    def __init__(self, app: Flask) -> None:
+    def __init__(self, admins: List[str], teams: List[str]) -> None:
         self.cache: Dict[str, CacheEntry] = {}
-        self.admins = set(app.config["ADMINS"])
-        self.teams = set(app.config["TEAMS_WHITELIST"])
+        self.admins = set(admins)
+        self.teams = set(teams)
         self.rate_limited_until = 0
 
     def get_from_cache(self, token: str) -> Optional[User]:

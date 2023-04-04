@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import sqlite3
 from time import time
-from typing import Any, List, Optional, Set, Tuple
+from typing import IO, Any, Dict, List, Optional, Set, Tuple
 
 from flask import Flask
 
@@ -27,6 +27,7 @@ class Db:
         if not self._query(f"SELECT * FROM {sqlite_schema}"):
             logger.info("No tables. Initializing database schema.")
             with self.db as trans:
+                f: IO[str]
                 with app.open_resource("schema.sql", mode="r") as f:
                     trans.executescript("BEGIN;" + f.read())
                 trans.execute(f"PRAGMA user_version = {VERSION}")
@@ -68,10 +69,12 @@ class Db:
     def _begin(self) -> None:
         self.db.execute("BEGIN")
 
-    def _query(self, query: str, args: tuple = ()) -> List[sqlite3.Row]:
+    def _query(self, query: str, args: Tuple[Any, ...] = ()) -> List[sqlite3.Row]:
         return self.db.execute(query, args).fetchall()
 
-    def _query_one(self, query: str, args: tuple = ()) -> Optional[sqlite3.Row]:
+    def _query_one(
+        self, query: str, args: Tuple[Any, ...] = ()
+    ) -> Optional[sqlite3.Row]:
         result = self._query(query, args)
         return result[0] if result else None
 
@@ -403,7 +406,7 @@ class Db:
                 (token, team),
             )
 
-    def token_state(self, team: str) -> dict:
+    def token_state(self, team: str) -> Dict[str, Any]:
         row = self._query_one(
             "SELECT user, isBad, temporary FROM msgTokens WHERE team = ?", (team,)
         )

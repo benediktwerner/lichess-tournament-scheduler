@@ -7,7 +7,10 @@ from calendar import monthrange
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from time import time
-from typing import Any, List, Optional, Protocol
+from typing import Any, Dict, List, Optional, Protocol, Type, TypeVar
+
+T = TypeVar("T")
+U = TypeVar("U")
 
 
 @dataclass
@@ -63,7 +66,7 @@ class Schedule:
         return extract_team_battle_teams(self.teamBattleTeams)
 
     @staticmethod
-    def from_json(j: dict) -> Schedule:
+    def from_json(j: dict[str, Any]) -> Schedule:
         scheduleDay = get_or_raise(j, "scheduleDay", int)
         scheduleStart = get_opt_or_raise(j, "scheduleStart", int)
         if (
@@ -127,7 +130,7 @@ class Schedule:
         return Schedule(
             name,
             get_or_raise(j, "team", str),
-            float(get_or_raise(j, "clock", (int, float))),
+            float(get_or_raise2(j, "clock", int, float)),
             get_or_raise(j, "increment", int),
             get_or_raise(j, "minutes", int),
             get_or_raise(j, "variant", str),
@@ -201,7 +204,7 @@ class Schedule:
         if self.scheduleEnd and self.scheduleEnd < endTime:
             endTime = self.scheduleEnd
 
-        times = []
+        times: List[int] = []
         while nxt <= endTime:
             if not self.scheduleStart or self.scheduleStart <= nxt:
                 times.append(nxt)
@@ -226,7 +229,7 @@ class ScheduleWithId(Schedule):
         return s
 
     @staticmethod
-    def from_json(j: dict) -> ScheduleWithId:
+    def from_json(j: Dict[str, object]) -> ScheduleWithId:
         s = Schedule.from_json(j)
         return ScheduleWithId(
             s.name,
@@ -312,13 +315,13 @@ class ArenaEdit:
         )
 
     @staticmethod
-    def from_json(j: dict) -> ArenaEdit:
+    def from_json(j: Dict[str, object]) -> ArenaEdit:
         return ArenaEdit(
             get_or_raise(j, "id", str),
             get_or_raise(j, "name", str),
             get_or_raise(j, "team", str),
             get_opt_or_raise(j, "startsAt", int),
-            float(get_or_raise(j, "clock", (int, float))),
+            float(get_or_raise2(j, "clock", int, float)),
             get_or_raise(j, "increment", int),
             get_or_raise(j, "minutes", int),
             get_or_raise(j, "variant", str),
@@ -354,16 +357,27 @@ class ParseError(Exception):
     pass
 
 
-def get_or_raise(j: dict, key: str, typ: type | tuple[type, type]) -> Any:
+def get_or_raise(j: Dict[str, object], key: str, typ: Type[T]) -> T:
     if key not in j:
         raise ParseError(f"Missing key: {key}")
     val = j[key]
-    if not isinstance(val, typ):
-        raise ParseError(f"Invalid value for {key}: {val}")
-    return val
+    if isinstance(val, typ):
+        return val
+    raise ParseError(f"Invalid value for {key}: {val}")
 
 
-def get_opt_or_raise(j: dict, key: str, typ: type) -> Any:
+def get_or_raise2(j: Dict[str, object], key: str, typ: Type[T], typ2: Type[U]) -> T | U:
+    if key not in j:
+        raise ParseError(f"Missing key: {key}")
+    val = j[key]
+    if isinstance(val, typ):
+        return val
+    if isinstance(val, typ2):
+        return val
+    raise ParseError(f"Invalid value for {key}: {val}")
+
+
+def get_opt_or_raise(j: Dict[str, object], key: str, typ: Type[T]) -> T | None:
     val = j.get(key)
     if val is not None and not isinstance(val, typ):
         raise ParseError(f"Invalid value for {key}: {val}")
@@ -374,7 +388,7 @@ def extract_team_battle_teams(ts: Optional[str]) -> List[str]:
     if not ts:
         return []
     teams = set(line.strip().split()[0] for line in ts.splitlines() if line.strip())
-    result = []
+    result: List[str] = []
     for team in teams:
         teamId = re.findall(r"^https://lichess.org/team/([\w-]{2,})$", team)
         if teamId:
@@ -394,7 +408,7 @@ def add_months(date: datetime, amnt: int) -> datetime:
 
 class NxtDateFinder(Protocol):
     def find_next(self, date: datetime) -> datetime:
-        pass
+        raise NotImplementedError
 
 
 class AddDelta:
