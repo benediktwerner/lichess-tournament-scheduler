@@ -10,7 +10,7 @@ from flask import Flask
 from model import CreatedArena, MsgToSend, Schedule, ScheduleWithId
 
 DATABASE = "database.sqlite"
-VERSION = 10
+VERSION = 11
 
 
 logger = logging.getLogger(__name__)
@@ -195,11 +195,13 @@ class Db:
                     scheduleStart,
                     scheduleEnd,
                     teamBattleTeams,
+                    teamBattleAlternativeTeamsEnabled,
+                    teamBattleAlternativeTeams,
                     teamBattleLeaders,
                     daysInAdvance,
                     msgMinutesBefore,
                     msgTemplate
-                   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     s.name,
@@ -221,6 +223,8 @@ class Db:
                     s.scheduleStart,
                     s.scheduleEnd,
                     s.teamBattleTeams,
+                    s.teamBattleAlternativeTeamsEnabled,
+                    s.teamBattleAlternativeTeams,
                     s.teamBattleLeaders,
                     s.daysInAdvance,
                     s.msgMinutesBefore,
@@ -250,6 +254,8 @@ class Db:
                     scheduleStart = ?,
                     scheduleEnd = ?,
                     teamBattleTeams = ?,
+                    teamBattleAlternativeTeamsEnabled = ?,
+                    teamBattleAlternativeTeams = ?,
                     teamBattleLeaders = ?,
                     daysInAdvance = ?,
                     msgMinutesBefore = ?,
@@ -275,6 +281,8 @@ class Db:
                     s.scheduleStart,
                     s.scheduleEnd,
                     s.teamBattleTeams,
+                    s.teamBattleAlternativeTeamsEnabled,
+                    s.teamBattleAlternativeTeams,
                     s.teamBattleLeaders,
                     s.daysInAdvance,
                     s.msgMinutesBefore,

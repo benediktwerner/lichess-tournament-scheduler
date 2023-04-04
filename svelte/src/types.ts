@@ -19,6 +19,8 @@ export interface Schedule {
   scheduleStart?: number;
   scheduleEnd?: number;
   teamBattleTeams?: string;
+  teamBattleAlternativeTeamsEnabled?: boolean;
+  teamBattleAlternativeTeams?: string;
   teamBattleLeaders?: number;
   daysInAdvance?: number;
   msgMinutesBefore?: number;

@@ -53,6 +53,9 @@
   let scheduleStartEnabled = !!scheduleStart;
   let scheduleEndEnabled = !!scheduleEnd;
   let teamBattleTeams = schedule?.teamBattleTeams;
+  let teamBattleAlternativeTeamsEnabled =
+    schedule?.teamBattleAlternativeTeamsEnabled;
+  let teamBattleAlternativeTeams = schedule?.teamBattleAlternativeTeams;
   let teamBattleLeaders = schedule?.teamBattleLeaders;
   let isTeamBattle = !!teamBattleTeams && teamBattleTeams.length > 0;
   let daysInAdvance = schedule?.daysInAdvance ?? 1;
@@ -121,6 +124,8 @@
           ? Math.floor(+new Date(scheduleEnd) / 1000) + SECS_IN_DAY
           : undefined,
       teamBattleTeams: isTeamBattle ? teamBattleTeams : undefined,
+      teamBattleAlternativeTeamsEnabled,
+      teamBattleAlternativeTeams,
       teamBattleLeaders: isTeamBattle ? teamBattleLeaders : undefined,
       daysInAdvance,
       updateCreated,
@@ -158,7 +163,7 @@
     <tr>
       <td>Name:</td>
       <td>
-        <input type="text" bind:value={name} required />
+        <input type="text" bind:value={name} size="50" required />
         {isTeamBattle ? 'Team Battle' : 'Arena'}
         <br />
         <small>
@@ -414,7 +419,28 @@
             rest of the line is ignored so you can copy from the Lichess team
             battle editor which has auto-complete)</small
           ><br />
-          <textarea cols="50" rows="10" bind:value={teamBattleTeams} required />
+          <textarea
+            cols="100"
+            rows="20"
+            bind:value={teamBattleTeams}
+            required
+          />
+          <input
+            type="checkbox"
+            bind:checked={teamBattleAlternativeTeamsEnabled}
+            id="teamBattleAlternativeTeamsEnabled"
+          /><label for="teamBattleAlternativeTeamsEnabled"
+            >Use different teams list if the tournament is in the last week of
+            the month</label
+          >
+          {#if teamBattleAlternativeTeamsEnabled}
+            <textarea
+              cols="100"
+              rows="10"
+              bind:value={teamBattleAlternativeTeams}
+              required
+            />
+          {/if}
         </td>
       </tr>
       <tr>

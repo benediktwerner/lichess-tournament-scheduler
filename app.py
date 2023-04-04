@@ -185,8 +185,6 @@ def edit() -> str:
 
         db.update_scheduled_msgs(schedule)
 
-        teams = schedule.team_battle_teams()
-        leaders = schedule.teamBattleLeaders
         upcoming = db.created_upcoming_with_schedule(schedule.id)
         prev = db.previous_created(schedule.id, int(time()))
         nth = db.num_created_before(schedule.id, int(time()))
@@ -205,7 +203,10 @@ def edit() -> str:
             if schedule.is_team_battle:
                 try:
                     api.update_team_battle(
-                        id, teams, leaders, app.config["LICHESS_API_KEY"]
+                        id,
+                        schedule.team_battle_teams(at),
+                        schedule.teamBattleLeaders,
+                        app.config["LICHESS_API_KEY"],
                     )
                 except Exception as e:
                     app.logger.error(f"Failed to update arena teams: {e}")

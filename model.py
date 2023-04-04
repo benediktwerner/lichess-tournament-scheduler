@@ -1,4 +1,5 @@
 from __future__ import annotations
+import calendar
 
 import re
 import sqlite3
@@ -30,6 +31,8 @@ class Schedule:
     scheduleStart: Optional[int]
     scheduleEnd: Optional[int]
     teamBattleTeams: Optional[str]
+    teamBattleAlternativeTeamsEnabled: Optional[bool]
+    teamBattleAlternativeTeams: Optional[str]
     teamBattleLeaders: Optional[int]
     daysInAdvance: Optional[int]
     msgMinutesBefore: Optional[int]
@@ -51,7 +54,12 @@ class Schedule:
     def days_in_advance(self) -> int:
         return self.daysInAdvance or 1
 
-    def team_battle_teams(self) -> List[str]:
+    def team_battle_teams(self, at: int) -> List[str]:
+        if self.teamBattleAlternativeTeamsEnabled:
+            date = datetime.utcfromtimestamp(at)
+            daysInMonth = calendar.monthrange(date.year, date.month)[1]
+            if date.day > daysInMonth - 7:
+                return extract_team_battle_teams(self.teamBattleAlternativeTeams)
         return extract_team_battle_teams(self.teamBattleTeams)
 
     @staticmethod
@@ -100,6 +108,22 @@ class Schedule:
                 "Invalid or empty team battle teams list. Expected one line per team starting with either the team ID or team page URL."
             )
 
+        teamBattleAlternativeTeamsEnabled = get_opt_or_raise(
+            j, "teamBattleAlternativeTeamsEnabled", bool
+        )
+        if teamBattleAlternativeTeamsEnabled:
+            teamBattleAlternativeTeams = get_or_raise(
+                j, "teamBattleAlternativeTeams", str
+            )
+            if not teamBattleAlternativeTeams or not extract_team_battle_teams(
+                teamBattleAlternativeTeams
+            ):
+                raise ParseError(
+                    "Invalid or empty team battle alternative teams list. Expected one line per team starting with either the team ID or team page URL."
+                )
+        else:
+            teamBattleAlternativeTeams = None
+
         return Schedule(
             name,
             get_or_raise(j, "team", str),
@@ -120,6 +144,8 @@ class Schedule:
             scheduleStart,
             get_opt_or_raise(j, "scheduleEnd", int),
             teamBattleTeams,
+            teamBattleAlternativeTeamsEnabled,
+            teamBattleAlternativeTeams,
             get_opt_or_raise(j, "teamBattleLeaders", int),
             get_opt_or_raise(j, "daysInAdvance", int),
             get_opt_or_raise(j, "msgMinutesBefore", int),
@@ -222,6 +248,8 @@ class ScheduleWithId(Schedule):
             s.scheduleStart,
             s.scheduleEnd,
             s.teamBattleTeams,
+            s.teamBattleAlternativeTeamsEnabled,
+            s.teamBattleAlternativeTeams,
             s.teamBattleLeaders,
             s.daysInAdvance,
             s.msgMinutesBefore,

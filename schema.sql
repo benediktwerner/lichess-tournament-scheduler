@@ -25,6 +25,8 @@ CREATE TABLE schedules (
     maxRating INT,
     minGames INT,
     teamBattleTeams TEXT,
+    teamBattleAlternativeTeamsEnabled BOOLEAN,
+    teamBattleAlternativeTeams TEXT,
     teamBattleLeaders INT,
     daysInAdvance INT,
     msgMinutesBefore INT,

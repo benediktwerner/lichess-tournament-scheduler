@@ -127,7 +127,7 @@ def schedule_arena(
         raise Exception(f"Created arena has invalid id: {id}")
 
     if s.is_team_battle:
-        teams = s.team_battle_teams()
+        teams = s.team_battle_teams(at)
         leaders = s.teamBattleLeaders or 5
         resp = requests.post(
             HOST + ENDPOINT_TEAM_BATTLE.format(id),
