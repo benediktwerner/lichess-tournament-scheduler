@@ -1,12 +1,13 @@
 from __future__ import annotations
-import calendar
 
+import calendar
 import re
 from dataclasses import dataclass
 from datetime import datetime
 from time import time
 from typing import List, Optional, Tuple, cast
 
+import dateutil.parser
 import requests
 
 from db import Schedule
@@ -201,7 +202,7 @@ def update_link_to_next_arena(
         name = name[: -len(" Arena")]
     elif name.endswith(" Team Battle"):
         name = name[: -len(" Team Battle")]
-    at = int(datetime.strptime(arena["startsAt"][:-5], "%Y-%m-%dT%H:%M:%S").timestamp())
+    at = int(dateutil.parser.isoparse(arena["startsAt"]).timestamp())
 
     data = {
         "clockTime": arena["clock"]["limit"] / 60,
