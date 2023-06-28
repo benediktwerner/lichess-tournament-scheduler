@@ -65,7 +65,9 @@
     //   return;
     // }
 
-    const resp = await fetch(LICHESS_HOST + `/api/team/${team}/arena`);
+    const resp = await fetch(LICHESS_HOST + `/api/team/${team}/arena`, {
+      headers: { Accept: 'application/json' },
+    });
     const text = await resp.text();
     const arenas = [];
     for (const line of text.split(/\r?\n/g)) {

@@ -108,7 +108,7 @@ def schedule_arena(
 
     resp = requests.post(
         HOST + ENDPOINT_CREATE_ARENA,
-        headers={"Authorization": f"Bearer {api_key}"},
+        headers={"Authorization": f"Bearer {api_key}", "Accept": "application/json"},
         data=data,
     )
     resp.raise_for_status()
@@ -122,7 +122,10 @@ def schedule_arena(
         leaders = s.teamBattleLeaders or 5
         resp = requests.post(
             HOST + ENDPOINT_TEAM_BATTLE.format(id),
-            headers={"Authorization": f"Bearer {api_key}"},
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Accept": "application/json",
+            },
             data={"teams": ",".join(teams), "nbLeaders": leaders},
         )
         resp.raise_for_status()
@@ -135,7 +138,7 @@ def update_team_battle(
 ) -> None:
     resp = requests.post(
         HOST + ENDPOINT_TEAM_BATTLE.format(arena_id),
-        headers={"Authorization": f"Bearer {api_key}"},
+        headers={"Authorization": f"Bearer {api_key}", "Accept": "application/json"},
         data={"teams": ",".join(teams), "nbLeaders": nbLeaders or 5},
     )
     resp.raise_for_status()
@@ -144,7 +147,7 @@ def update_team_battle(
 def terminate_arena(id: str, api_key: str) -> None:
     requests.post(
         HOST + ENDPOINT_TERMINATE_ARENA.format(id),
-        headers={"Authorization": f"Bearer {api_key}"},
+        headers={"Authorization": f"Bearer {api_key}", "Accept": "application/json"},
     ).raise_for_status()
 
 
@@ -180,7 +183,7 @@ def update_arena(
 
     resp = requests.post(
         HOST + ENDPOINT_UPDATE_ARENA.format(arena.id),
-        headers={"Authorization": f"Bearer {api_key}"},
+        headers={"Authorization": f"Bearer {api_key}", "Accept": "application/json"},
         data=data,
     )
 
@@ -220,7 +223,7 @@ def update_link_to_next_arena(
 
     requests.post(
         HOST + ENDPOINT_UPDATE_ARENA.format(id),
-        headers={"Authorization": f"Bearer {api_key}"},
+        headers={"Authorization": f"Bearer {api_key}", "Accept": "application/json"},
         data=data,
     ).raise_for_status()
 
@@ -228,7 +231,7 @@ def update_link_to_next_arena(
 def send_team_msg(msg: MsgToSend, token: str) -> None:
     requests.post(
         HOST + ENDPOINT_TEAM_PM.format(msg.team),
-        headers={"Authorization": f"Bearer {token}"},
+        headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
         data={"message": msg.text()},
     ).raise_for_status()
 

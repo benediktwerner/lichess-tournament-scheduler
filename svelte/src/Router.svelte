@@ -50,7 +50,7 @@
     }}
     gotoEditArena={async (id, t) => {
       const resp = await fetch(LICHESS_HOST + '/api/tournament/' + id, {
-        headers: { 'Accept-Language': 'en' },
+        headers: { 'Accept-Language': 'en', Accept: 'application/json' },
       });
       if (!resp.ok) {
         alert(`Error while fetching tournament info: ${await resp.text()}`);

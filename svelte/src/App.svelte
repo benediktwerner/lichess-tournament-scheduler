@@ -37,7 +37,7 @@
     if (!token) return '';
 
     const resp = await fetch(`${LICHESS_HOST}/api/account`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     });
 
     if (resp.ok) {
@@ -72,6 +72,7 @@
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
       },
     });
   };
