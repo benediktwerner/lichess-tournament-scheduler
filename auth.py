@@ -61,13 +61,14 @@ class Auth:
 
     def add_cache(self, token: str, user: User) -> None:
         if len(self.cache) >= CACHE_SIZE:
+            cutoff = time() - CACHE_SECS
             self.cache = {
                 k: v
                 for k, v in self.cache.items()
-                if v.time > time() - CACHE_SIZE and (v.user.is_admin or v.user.teams)
+                if v.time > cutoff and (v.user.is_admin or v.user.teams)
             }
-        if len(self.cache) >= CACHE_SIZE:
-            self.cache = {}
+            if len(self.cache) >= CACHE_SIZE:
+                self.cache = {}
         self.cache[token] = CacheEntry(user, time())
 
     def __call__(self) -> User:
