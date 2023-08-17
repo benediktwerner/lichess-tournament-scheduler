@@ -91,8 +91,14 @@ class Auth:
 
         try:
             res = api.verify_token(token)
-            if not res or res.expired or not res.allows_tournaments:
-                abort(403)
+            if not res:
+                abort(403, description="Token invalid or unknown to Lichess")
+
+            if res.expired:
+                abort(403, description="Token expired")
+
+            if not res.allows_tournaments:
+                abort(403, description="Token does not allow tournament creation")
 
             teams = [
                 team for team in api.leader_teams(res.userId) if team in self.teams
