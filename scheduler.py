@@ -13,6 +13,8 @@ from model import ScheduleWithId
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+last_scheduler_run = time()
+
 
 class SchedulerThread(Thread):
     def __init__(self, api_key: str) -> None:
@@ -146,9 +148,12 @@ class SchedulerThread(Thread):
             sleep(5)
 
     def run(self) -> None:
+        global last_scheduler_run
+
         try:
             while True:
                 logger.info("Running scheduling")
+                last_scheduler_run = time()
                 try:
                     if (
                         self.arenas_rate_limited_until is None
@@ -178,3 +183,17 @@ class SchedulerThread(Thread):
             except BaseException as e2:
                 print(f"Double fatal error in scheduler thread:\n{e}\n\n{e2}")
             raise
+
+
+class SchedulerWatchdog(Thread):
+    def __init__(self) -> None:
+        super().__init__(daemon=True)
+
+    def run(self) -> None:
+        global last_scheduler_run
+
+        while True:
+            if time() - last_scheduler_run > 60 * 60:
+                logger.error("Scheduler thread has not run in an hour. Restarting...")
+                exit(42)
+            sleep(60 * 60)

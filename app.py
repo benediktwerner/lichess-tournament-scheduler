@@ -17,7 +17,7 @@ import api
 from auth import Auth
 from db import Db
 from model import ArenaEdit, ParseError, Schedule, ScheduleWithId, get_or_raise
-from scheduler import SchedulerThread
+from scheduler import SchedulerThread, SchedulerWatchdog
 
 OK_RESPONSE = '{"ok":true}'
 API_VERSION = "5"
@@ -46,6 +46,7 @@ try:
 
     auth = Auth(ADMINS, TEAMS_WHITELIST)
     SchedulerThread(LICHESS_API_KEY).start()
+    SchedulerWatchdog().start()
 
 except Exception as e:
     app.logger.error(f"Exception during startup: {e}")
