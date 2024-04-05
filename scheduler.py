@@ -146,25 +146,35 @@ class SchedulerThread(Thread):
             sleep(5)
 
     def run(self) -> None:
-        while True:
-            logger.info("Running scheduling")
-            try:
-                if (
-                    self.arenas_rate_limited_until is None
-                    or self.arenas_rate_limited_until < time()
-                ):
-                    self.schedule_next_arenas()
-                self.send_scheduled_messages()
-            except Exception as e:
-                logger.error(f"Error during scheduling: {e}", exc_info=True)
-                if hasattr(e, "response"):
+        try:
+            while True:
+                logger.info("Running scheduling")
+                try:
+                    if (
+                        self.arenas_rate_limited_until is None
+                        or self.arenas_rate_limited_until < time()
+                    ):
+                        self.schedule_next_arenas()
+                    self.send_scheduled_messages()
+                except Exception as e:
+                    logger.error(f"Error during scheduling: {e}", exc_info=True)
                     try:
-                        response = cast(Any, e).response
-                        logger.error(
-                            f"Response: {response.status_code} {response.text}"
-                        )
-                        if response.status_code == 429:
-                            sleep(60 * 60)
+                        if hasattr(e, "response"):
+                            response = cast(Any, e).response
+                            logger.error(
+                                f"Response: {response.status_code} {response.text}"
+                            )
+                            if response.status_code == 429:
+                                sleep(60 * 60)
                     except Exception:
-                        pass
-            sleep(60)
+                        logger.error(
+                            f"Error trying to log response while handling error: {e}",
+                            exc_info=True,
+                        )
+                sleep(60)
+        except BaseException as e:
+            try:
+                logger.error(f"Fatal error in scheduler thread: {e}", exc_info=True)
+            except BaseException as e2:
+                print(f"Double fatal error in scheduler thread:\n{e}\n\n{e2}")
+            raise
