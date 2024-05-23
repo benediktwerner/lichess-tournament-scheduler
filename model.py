@@ -226,6 +226,10 @@ class ScheduleWithId(Schedule):
         s.rated = bool(s.rated)
         s.berserkable = bool(s.berserkable)
         s.streakable = bool(s.streakable)
+        if s.teamBattleAlternativeTeamsEnabled is not None:
+            s.teamBattleAlternativeTeamsEnabled = bool(
+                s.teamBattleAlternativeTeamsEnabled
+            )
         return s
 
     @staticmethod
