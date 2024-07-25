@@ -287,6 +287,8 @@ def format_description(
 
 
 def format_nth(n: int) -> str:
+    if (n % 100) // 10 == 1:
+        return f"{n}th"
     m = n % 10
     if m == 1:
         return f"{n}st"
