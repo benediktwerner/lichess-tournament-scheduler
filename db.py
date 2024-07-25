@@ -346,7 +346,7 @@ class Db:
                     (
                         schedule.msgTemplate,
                         schedule.msgMinutesBefore,
-                        schedule.msgMinutesBefore,
+                        schedule.msgMinutesBefore * 60,
                         schedule.id,
                     ),
                 )
