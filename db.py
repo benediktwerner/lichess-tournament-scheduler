@@ -341,13 +341,15 @@ class Db:
             ):
                 conn.execute(
                     """INSERT INTO scheduledMsgs (arenaId, scheduleId, team, template, minutesBefore, sendTime) 
-                        SELECT id, scheduleId, team, ?, ?, time - ? FROM createdArenas WHERE scheduleId = ?
+                        SELECT id, scheduleId, team, ?, ?, time - ? FROM createdArenas WHERE scheduleId = ? and time - ? > ?
                     """,
                     (
                         schedule.msgTemplate,
                         schedule.msgMinutesBefore,
                         schedule.msgMinutesBefore * 60,
                         schedule.id,
+                        schedule.msgMinutesBefore * 60,
+                        int(time()),
                     ),
                 )
 
