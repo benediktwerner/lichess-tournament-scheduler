@@ -28,7 +28,7 @@ class SchedulerThread(Thread):
             schedules = db.schedules()
 
             now = time()
-            scheduled = db.get_scheduled()
+            scheduled = db.created_upcoming_or_failed()
             to_schedule: List[Tuple[int, ScheduleWithId]] = []
             for s in schedules:
                 for nxt in s.next_times():

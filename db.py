@@ -109,7 +109,8 @@ class Db:
 
     def created(self, id: str) -> Optional[CreatedArena]:
         row = self._query_one(
-            "SELECT id, scheduleId, team, time FROM createdArenas WHERE id = ?", (id,)
+            "SELECT id, scheduleId, team, time FROM createdArenas WHERE id = ? AND error IS NULL",
+            (id,),
         )
         if row:
             return CreatedArena.from_row(row)
@@ -117,18 +118,19 @@ class Db:
 
     def created_upcoming(self) -> List[Tuple[str, str]]:
         rows = self._query(
-            "SELECT id, team FROM createdArenas WHERE time > ?", (int(time()),)
+            "SELECT id, team FROM createdArenas WHERE time > ? AND error IS NULL",
+            (int(time()),),
         )
         return [(row["id"], row["team"]) for row in rows]
 
     def created_upcoming_with_schedule(self, schedule_id: int) -> List[Tuple[str, int]]:
         rows = self._query(
-            "SELECT id, time FROM createdArenas WHERE scheduleId = ? and time > ? ORDER BY time ASC",
+            "SELECT id, time FROM createdArenas WHERE scheduleId = ? and time > ? AND error IS NULL ORDER BY time ASC",
             (schedule_id, int(time())),
         )
         return [(row["id"], row["time"]) for row in rows]
 
-    def get_scheduled(self) -> Set[Tuple[int, int]]:
+    def created_upcoming_or_failed(self) -> Set[Tuple[int, int]]:
         rows = self._query(
             "SELECT scheduleId, time FROM createdArenas WHERE time > ?", (int(time()),)
         )
@@ -145,7 +147,7 @@ class Db:
 
     def previous_created(self, schedule_id: int, timestamp: int) -> Optional[str]:
         result = self._query_one(
-            "SELECT id FROM createdArenas WHERE scheduleId = ? and time < ? ORDER BY time DESC LIMIT 1",
+            "SELECT id FROM createdArenas WHERE scheduleId = ? AND time < ? AND error IS NULL ORDER BY time DESC LIMIT 1",
             (schedule_id, timestamp),
         )
         return result["id"] if result else None
@@ -154,7 +156,7 @@ class Db:
         self, schedule_id: int, timestamp: int
     ) -> Tuple[Optional[str], Optional[str]]:
         rows = self._query(
-            "SELECT id FROM createdArenas WHERE scheduleId = ? and time < ? ORDER BY time DESC LIMIT 2",
+            "SELECT id FROM createdArenas WHERE scheduleId = ? and time < ? AND error IS NULL ORDER BY time DESC LIMIT 2",
             (schedule_id, timestamp),
         )
         prevs = [row["id"] for row in rows]
@@ -341,7 +343,7 @@ class Db:
             ):
                 conn.execute(
                     """INSERT INTO scheduledMsgs (arenaId, scheduleId, team, template, minutesBefore, sendTime) 
-                        SELECT id, scheduleId, team, ?, ?, time - ? FROM createdArenas WHERE scheduleId = ? and time - ? > ?
+                        SELECT id, scheduleId, team, ?, ?, time - ? FROM createdArenas WHERE scheduleId = ? AND time - ? > ? AND error IS NULL
                     """,
                     (
                         schedule.msgTemplate,
