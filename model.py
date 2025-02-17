@@ -29,6 +29,7 @@ class Schedule:
     minRating: Optional[int]
     maxRating: Optional[int]
     minGames: Optional[int]
+    allowBots: bool
     scheduleDay: int
     scheduleTime: int
     scheduleStart: Optional[int]
@@ -142,6 +143,7 @@ class Schedule:
             get_opt_or_raise(j, "minRating", int),
             get_opt_or_raise(j, "maxRating", int),
             get_opt_or_raise(j, "minGames", int),
+            get_or_raise(j, "allowBots", bool),
             scheduleDay,
             get_or_raise(j, "scheduleTime", int),
             scheduleStart,
@@ -226,6 +228,7 @@ class ScheduleWithId(Schedule):
         s.rated = bool(s.rated)
         s.berserkable = bool(s.berserkable)
         s.streakable = bool(s.streakable)
+        s.allowBots = bool(s.allowBots)
         if s.teamBattleAlternativeTeamsEnabled is not None:
             s.teamBattleAlternativeTeamsEnabled = bool(
                 s.teamBattleAlternativeTeamsEnabled
@@ -250,6 +253,7 @@ class ScheduleWithId(Schedule):
             s.minRating,
             s.maxRating,
             s.minGames,
+            s.allowBots,
             s.scheduleDay,
             s.scheduleTime,
             s.scheduleStart,
@@ -283,6 +287,7 @@ class ArenaEdit:
     minRating: Optional[int]
     maxRating: Optional[int]
     minGames: Optional[int]
+    allowBots: bool
     isTeamBattle: bool
     teamBattleTeams: Optional[str]
     teamBattleLeaders: Optional[int]
@@ -311,6 +316,7 @@ class ArenaEdit:
             s.minRating,
             s.maxRating,
             s.minGames,
+            s.allowBots,
             s.is_team_battle,
             s.teamBattleTeams,
             s.teamBattleLeaders,
@@ -337,6 +343,7 @@ class ArenaEdit:
             get_opt_or_raise(j, "minRating", int),
             get_opt_or_raise(j, "maxRating", int),
             get_opt_or_raise(j, "minGames", int),
+            get_or_raise(j, "allowBots", bool),
             get_or_raise(j, "isTeamBattle", bool),
             get_opt_or_raise(j, "teamBattleTeams", str),
             get_opt_or_raise(j, "teamBattleLeaders", int),

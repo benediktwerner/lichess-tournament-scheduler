@@ -1,0 +1,2 @@
+ALTER TABLE schedules
+  ADD allowBots BOOLEAN NOT NULL DEFAULT FALSE;

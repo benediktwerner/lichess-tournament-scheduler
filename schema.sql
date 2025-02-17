@@ -24,6 +24,7 @@ CREATE TABLE schedules (
     minRating INT,
     maxRating INT,
     minGames INT,
+    allowBots BOOLEAN NOT NULL,
     teamBattleTeams TEXT,
     teamBattleAlternativeTeamsEnabled BOOLEAN,
     teamBattleAlternativeTeams TEXT,

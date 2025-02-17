@@ -10,7 +10,7 @@ from flask import Flask
 from model import CreatedArena, MsgToSend, Schedule, ScheduleWithId
 
 DATABASE = "database.sqlite"
-VERSION = 11
+VERSION = 12
 
 
 logger = logging.getLogger(__name__)
@@ -195,6 +195,7 @@ class Db:
                     minRating,
                     maxRating,
                     minGames,
+                    allowBots,
                     scheduleDay,
                     scheduleTime,
                     scheduleStart,
@@ -206,7 +207,7 @@ class Db:
                     daysInAdvance,
                     msgMinutesBefore,
                     msgTemplate
-                   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     s.name,
@@ -223,6 +224,7 @@ class Db:
                     s.minRating,
                     s.maxRating,
                     s.minGames,
+                    s.allowBots,
                     s.scheduleDay,
                     s.scheduleTime,
                     s.scheduleStart,
@@ -254,6 +256,7 @@ class Db:
                     minRating = ?,
                     maxRating = ?,
                     minGames = ?,
+                    allowBots = ?,
                     scheduleDay = ?,
                     scheduleTime = ?,
                     scheduleStart = ?,
@@ -281,6 +284,7 @@ class Db:
                     s.minRating,
                     s.maxRating,
                     s.minGames,
+                    s.allowBots,
                     s.scheduleDay,
                     s.scheduleTime,
                     s.scheduleStart,

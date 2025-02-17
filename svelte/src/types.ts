@@ -14,6 +14,7 @@ export interface Schedule {
   minRating?: number;
   maxRating?: number;
   minGames?: number;
+  allowBots: boolean;
   scheduleDay: number;
   scheduleTime: number;
   scheduleStart?: number;
@@ -85,6 +86,9 @@ export interface ApiArena extends ArenaBase {
   };
   msgMinutesBefore?: number;
   msgTemplate?: string;
+  verdicts?: {
+    list: { condition: string; verdict: string }[];
+  };
 }
 
 export interface ArenaEdit {
@@ -104,6 +108,7 @@ export interface ArenaEdit {
   minRating?: number;
   maxRating?: number;
   minGames?: number;
+  allowBots: boolean;
   isTeamBattle: boolean;
   teamBattleTeams?: string;
   teamBattleLeaders?: number;

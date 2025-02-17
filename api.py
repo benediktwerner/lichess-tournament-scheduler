@@ -88,6 +88,7 @@ def schedule_arena(
         "rated": BOOL[s.rated],
         "berserkable": BOOL[s.berserkable],
         "streakable": BOOL[s.streakable],
+        "conditions.bots": BOOL[s.allowBots],
     }
     if s.is_team_battle:
         data["teamBattleByTeam"] = s.team
@@ -165,6 +166,7 @@ def update_arena(
         "rated": BOOL[arena.rated],
         "berserkable": BOOL[arena.berserkable],
         "streakable": BOOL[arena.streakable],
+        "conditions.bots": BOOL[arena.allowBots],
     }
     if arena.startsAt:
         data["startDate"] = arena.startsAt * 1000
@@ -220,6 +222,12 @@ def update_link_to_next_arena(
         data["conditions.minRating.rating"] = arena["minRating"]["rating"]
     if "maxRating" in arena:
         data["conditions.maxRating.rating"] = arena["maxRating"]["rating"]
+    if any(
+        verdict["condition"] == "Bot players are allowed."
+        and verdict["verdict"] == "ok"
+        for verdict in arena.get("verdicts", {}).get("list", [])
+    ):
+        data["conditions.bots"] = "true"
 
     requests.post(
         HOST + ENDPOINT_UPDATE_ARENA.format(id),

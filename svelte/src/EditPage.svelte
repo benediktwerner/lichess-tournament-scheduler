@@ -41,6 +41,7 @@
   let minRatingEnabled = !!minRating;
   let maxRatingEnabled = !!maxRating;
   let minGamesEnabled = !!minGames;
+  let allowBots = schedule?.allowBots ?? false;
   const day = schedule?.scheduleDay ?? 0;
   let scheduleDay =
     day >= 10_000 ? 11 : day >= 1000 ? Math.floor(day / 1000) + 7 : day;
@@ -76,7 +77,7 @@
   const showSetTokenDialog = createShowSetTokenDialogFn(
     modal,
     token,
-    updateTokenUser
+    updateTokenUser,
   );
 
   const handleSave = async () => {
@@ -107,12 +108,13 @@
       minRating: minRatingEnabled && minRating ? minRating : undefined,
       maxRating: maxRatingEnabled && maxRating ? maxRating : undefined,
       minGames: minGamesEnabled && minGames ? minGames : undefined,
+      allowBots,
       scheduleDay:
         scheduleDay === 11
           ? 10_000 + scheduleWeekdayOrdinal * 10 + scheduleWeekday
           : scheduleDay > 7
-          ? (scheduleDay - 7) * 1000 + scheduleStep
-          : scheduleDay,
+            ? (scheduleDay - 7) * 1000 + scheduleStep
+            : scheduleDay,
       scheduleTime: time,
       scheduleStart:
         (scheduleStartEnabled && scheduleStart) ||
@@ -310,6 +312,10 @@
           bind:value={minGames}
         />
       </td>
+    </tr>
+    <tr>
+      <td>Allow Bots:</td>
+      <td><input type="checkbox" bind:checked={allowBots} /></td>
     </tr>
     <tr>
       <td>Schedule:</td>

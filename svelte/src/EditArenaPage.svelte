@@ -8,6 +8,7 @@
   import type { ApiArena, ArenaEdit } from './types';
   import {
     alertErrorResponse,
+    allowsBots,
     createShowSetTokenDialogFn,
     fetchTokenUser,
   } from './utils';
@@ -36,6 +37,7 @@
   let minRatingEnabled = !!minRating;
   let maxRatingEnabled = !!maxRating;
   let minGamesEnabled = !!minGames;
+  let allowBots = allowsBots(arena);
   let startTime = new Date(arena.startsAt).toISOString().slice(0, 16);
   let teamBattleTeams = Object.entries(arena.teamBattle?.teams ?? {})
     .map(([key, name]) => `${key} "${name}"`)
@@ -57,7 +59,7 @@
   const showSetTokenDialog = createShowSetTokenDialogFn(
     modal,
     token,
-    updateTokenUser
+    updateTokenUser,
   );
 
   const handleSave = async () => {
@@ -86,6 +88,7 @@
       minRating: minRatingEnabled && minRating ? minRating : undefined,
       maxRating: maxRatingEnabled && maxRating ? maxRating : undefined,
       minGames: minGamesEnabled && minGames ? minGames : undefined,
+      allowBots,
       isTeamBattle,
       teamBattleTeams: isTeamBattle ? teamBattleTeams : undefined,
       teamBattleLeaders: isTeamBattle ? teamBattleLeaders : undefined,
@@ -239,6 +242,10 @@
           bind:value={minGames}
         />
       </td>
+    </tr>
+    <tr>
+      <td>Allow Bots:</td>
+      <td><input type="checkbox" bind:checked={allowBots} /></td>
     </tr>
     {#if isTeamBattle}
       <tr>
