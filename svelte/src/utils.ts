@@ -1,7 +1,7 @@
 import SetTokenDialog from './SetTokenDialog.svelte';
 import { API_HOST } from './config';
 import type { SimpleModalContext } from './simple-modal';
-import { ApiArena } from './types';
+import type { ApiArena } from './types';
 
 export const SECS_IN_DAY = 24 * 60 * 60;
 
