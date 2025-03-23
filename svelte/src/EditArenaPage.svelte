@@ -8,7 +8,6 @@
   import type { ApiArena, ArenaEdit } from './types';
   import {
     alertErrorResponse,
-    allowsBots,
     createShowSetTokenDialogFn,
     fetchTokenUser,
   } from './utils';
@@ -34,10 +33,11 @@
   let minRating = arena?.minRating?.rating;
   let maxRating = arena?.maxRating?.rating;
   let minGames = arena?.minRatedGames?.nb;
+  let minAccountAgeInDays = arena?.minAccountAgeInDays ?? 0;
   let minRatingEnabled = !!minRating;
   let maxRatingEnabled = !!maxRating;
   let minGamesEnabled = !!minGames;
-  let allowBots = allowsBots(arena);
+  let allowBots = arena?.botsAllowed ?? false;
   let startTime = new Date(arena.startsAt).toISOString().slice(0, 16);
   let teamBattleTeams = Object.entries(arena.teamBattle?.teams ?? {})
     .map(([key, name]) => `${key} "${name}"`)
@@ -88,6 +88,7 @@
       minRating: minRatingEnabled && minRating ? minRating : undefined,
       maxRating: maxRatingEnabled && maxRating ? maxRating : undefined,
       minGames: minGamesEnabled && minGames ? minGames : undefined,
+      minAccountAgeInDays: minAccountAgeInDays || undefined,
       allowBots,
       isTeamBattle,
       teamBattleTeams: isTeamBattle ? teamBattleTeams : undefined,
@@ -241,6 +242,25 @@
           disabled={!minGamesEnabled}
           bind:value={minGames}
         />
+      </td>
+    </tr>
+    <tr>
+      <td>Min account age:</td>
+      <td>
+        <select bind:value={minAccountAgeInDays}>
+          <option value={0}>0 days / No restriction</option>
+          <option value={1}>1 day</option>
+          <option value={3}>3 days</option>
+          <option value={7}>1 week (7 days)</option>
+          <option value={14}>2 weeks (14 days)</option>
+          <option value={30}>1 month (30 days)</option>
+          <option value={60}>2 months (60 days)</option>
+          <option value={90}>3 months (90 days)</option>
+          <option value={180}>6 months (180 days)</option>
+          <option value={365}>1 year (365 days)</option>
+          <option value={365 * 2}>2 years (730 days)</option>
+          <option value={365 * 3}>3 years (1095 days)</option>
+        </select>
       </td>
     </tr>
     <tr>

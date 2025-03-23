@@ -29,6 +29,7 @@ class Schedule:
     minRating: Optional[int]
     maxRating: Optional[int]
     minGames: Optional[int]
+    minAccountAgeInDays: Optional[int]
     allowBots: bool
     scheduleDay: int
     scheduleTime: int
@@ -143,6 +144,7 @@ class Schedule:
             get_opt_or_raise(j, "minRating", int),
             get_opt_or_raise(j, "maxRating", int),
             get_opt_or_raise(j, "minGames", int),
+            get_opt_or_raise(j, "minAccountAgeInDays", int),
             get_or_raise(j, "allowBots", bool),
             scheduleDay,
             get_or_raise(j, "scheduleTime", int),
@@ -253,6 +255,7 @@ class ScheduleWithId(Schedule):
             s.minRating,
             s.maxRating,
             s.minGames,
+            s.minAccountAgeInDays,
             s.allowBots,
             s.scheduleDay,
             s.scheduleTime,
@@ -287,6 +290,7 @@ class ArenaEdit:
     minRating: Optional[int]
     maxRating: Optional[int]
     minGames: Optional[int]
+    minAccountAgeInDays: Optional[int]
     allowBots: bool
     isTeamBattle: bool
     teamBattleTeams: Optional[str]
@@ -316,6 +320,7 @@ class ArenaEdit:
             s.minRating,
             s.maxRating,
             s.minGames,
+            s.minAccountAgeInDays,
             s.allowBots,
             s.is_team_battle,
             s.teamBattleTeams,
@@ -343,6 +348,7 @@ class ArenaEdit:
             get_opt_or_raise(j, "minRating", int),
             get_opt_or_raise(j, "maxRating", int),
             get_opt_or_raise(j, "minGames", int),
+            get_opt_or_raise(j, "minAccountAgeInDays", int),
             get_or_raise(j, "allowBots", bool),
             get_or_raise(j, "isTeamBattle", bool),
             get_opt_or_raise(j, "teamBattleTeams", str),

@@ -1,7 +1,6 @@
 import SetTokenDialog from './SetTokenDialog.svelte';
 import { API_HOST } from './config';
 import type { SimpleModalContext } from './simple-modal';
-import type { ApiArena } from './types';
 
 export const SECS_IN_DAY = 24 * 60 * 60;
 
@@ -112,12 +111,4 @@ export const fetchTokenUser = async (
     );
     return null;
   }
-};
-
-export const allowsBots = (arena?: ApiArena): boolean => {
-  return (arena?.verdicts?.list ?? []).some(
-    (verdict) =>
-      verdict.condition === 'Bot players are allowed.' &&
-      verdict.verdict === 'ok'
-  );
 };

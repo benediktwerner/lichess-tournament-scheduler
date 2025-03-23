@@ -106,6 +106,8 @@ def schedule_arena(
         data["conditions.maxRating.rating"] = s.maxRating
     if s.minGames:
         data["conditions.nbRatedGame.nb"] = s.minGames
+    if s.minAccountAgeInDays:
+        data["conditions.accountAge"] = s.minAccountAgeInDays
 
     resp = requests.post(
         HOST + ENDPOINT_CREATE_ARENA,
@@ -182,6 +184,8 @@ def update_arena(
         data["conditions.maxRating.rating"] = arena.maxRating
     if arena.minGames:
         data["conditions.nbRatedGame.nb"] = arena.minGames
+    if arena.minAccountAgeInDays:
+        data["conditions.accountAge"] = arena.minAccountAgeInDays
 
     resp = requests.post(
         HOST + ENDPOINT_UPDATE_ARENA.format(arena.id),
@@ -222,12 +226,10 @@ def update_link_to_next_arena(
         data["conditions.minRating.rating"] = arena["minRating"]["rating"]
     if "maxRating" in arena:
         data["conditions.maxRating.rating"] = arena["maxRating"]["rating"]
-    if any(
-        verdict["condition"] == "Bot players are allowed."
-        and verdict["verdict"] == "ok"
-        for verdict in arena.get("verdicts", {}).get("list", [])
-    ):
-        data["conditions.bots"] = "true"
+    if "botsAllowed" in arena:
+        data["conditions.bots"] = arena["botsAllowed"]
+    if "minAccountAgeInDays" in arena:
+        data["conditions.accountAge"] = arena["minAccountAgeInDays"]
 
     requests.post(
         HOST + ENDPOINT_UPDATE_ARENA.format(id),

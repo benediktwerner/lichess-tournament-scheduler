@@ -1,4 +1,4 @@
-export const API_VERSION = 5;
+export const API_VERSION = 6;
 export const VARIANT_NAMES = {
   standard: 'Standard',
   chess960: 'Chess960',

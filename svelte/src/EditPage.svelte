@@ -38,6 +38,7 @@
   let minRating = schedule?.minRating;
   let maxRating = schedule?.maxRating;
   let minGames = schedule?.minGames;
+  let minAccountAgeInDays = schedule?.minAccountAgeInDays ?? 0;
   let minRatingEnabled = !!minRating;
   let maxRatingEnabled = !!maxRating;
   let minGamesEnabled = !!minGames;
@@ -108,6 +109,7 @@
       minRating: minRatingEnabled && minRating ? minRating : undefined,
       maxRating: maxRatingEnabled && maxRating ? maxRating : undefined,
       minGames: minGamesEnabled && minGames ? minGames : undefined,
+      minAccountAgeInDays: minAccountAgeInDays || undefined,
       allowBots,
       scheduleDay:
         scheduleDay === 11
@@ -311,6 +313,25 @@
           disabled={!minGamesEnabled}
           bind:value={minGames}
         />
+      </td>
+    </tr>
+    <tr>
+      <td>Min account age:</td>
+      <td>
+        <select bind:value={minAccountAgeInDays}>
+          <option value={0}>0 days / No restriction</option>
+          <option value={1}>1 day</option>
+          <option value={3}>3 days</option>
+          <option value={7}>1 week (7 days)</option>
+          <option value={14}>2 weeks (14 days)</option>
+          <option value={30}>1 month (30 days)</option>
+          <option value={60}>2 months (60 days)</option>
+          <option value={90}>3 months (90 days)</option>
+          <option value={180}>6 months (180 days)</option>
+          <option value={365}>1 year (365 days)</option>
+          <option value={365 * 2}>2 years (730 days)</option>
+          <option value={365 * 3}>3 years (1095 days)</option>
+        </select>
       </td>
     </tr>
     <tr>
