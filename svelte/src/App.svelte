@@ -8,6 +8,8 @@
   import { API_VERSION } from './consts';
   import Router from './Router.svelte';
 
+  const ONE_DAY = 24 * 60 * 60 * 1_000;
+
   const baseUrl = () => {
     const url = new URL(location.href);
     url.search = '';
@@ -49,7 +51,7 @@
       }
     } else {
       console.error(
-        `Failed to fetch username: ${resp.status} ${resp.statusText}`
+        `Failed to fetch username: ${resp.status} ${resp.statusText}`,
       );
     }
 
@@ -68,13 +70,15 @@
     accessContext = null;
     error = null;
 
-    await fetch(`${LICHESS_HOST}/api/token`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/json',
-      },
-    });
+    if (token) {
+      await fetch(`${LICHESS_HOST}/api/token`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      });
+    }
   };
 
   const init = async () => {
@@ -110,7 +114,7 @@
   <h1>Lichess Tournament Scheduler</h1>
 
   {#if !outdated}
-    {#if accessContext?.token}
+    {#if accessContext?.token && new Date(accessContext.token.expiry) > new Date(+new Date() + ONE_DAY)}
       <div class="logout">
         {userName}
         <button type="button" on:click={handleLogout}>Logout</button>
