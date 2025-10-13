@@ -1,4 +1,4 @@
-export const API_VERSION = 6;
+export const API_VERSION = 7;
 export const VARIANT_NAMES = {
   standard: 'Standard',
   chess960: 'Chess960',
@@ -23,6 +23,13 @@ export const SCHEDULE_NAMES = [
   'Every x weeks',
   'Every x months',
   'Specific weekday of each month',
+  'Every day except Monday',
+  'Every day except Tuesday',
+  'Every day except Wednesday',
+  'Every day except Thursday',
+  'Every day except Friday',
+  'Every day except Saturday',
+  'Every day except Sunday',
 ];
 export const WEEKDAY_NAMES = [
   'Monday',

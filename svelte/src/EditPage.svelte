@@ -45,7 +45,13 @@
   let allowBots = schedule?.allowBots ?? false;
   const day = schedule?.scheduleDay ?? 0;
   let scheduleDay =
-    day >= 10_000 ? 11 : day >= 1000 ? Math.floor(day / 1000) + 7 : day;
+    day >= 20_000
+      ? 12 + day - 20_001
+      : day >= 10_000
+        ? 11
+        : day >= 1000
+          ? Math.floor(day / 1000) + 7
+          : day;
   let scheduleStep = day >= 1000 ? day % 1000 : 1;
   let scheduleWeekday = day >= 10_000 ? day % 10 : 0;
   let scheduleWeekdayOrdinal = day >= 10_000 ? Math.floor((day % 100) / 10) : 0;
@@ -112,11 +118,13 @@
       minAccountAgeInDays: minAccountAgeInDays || undefined,
       allowBots,
       scheduleDay:
-        scheduleDay === 11
-          ? 10_000 + scheduleWeekdayOrdinal * 10 + scheduleWeekday
-          : scheduleDay > 7
-            ? (scheduleDay - 7) * 1000 + scheduleStep
-            : scheduleDay,
+        scheduleDay >= 12
+          ? 20_001 + scheduleDay - 12
+          : scheduleDay === 11
+            ? 10_000 + scheduleWeekdayOrdinal * 10 + scheduleWeekday
+            : scheduleDay > 7
+              ? (scheduleDay - 7) * 1000 + scheduleStep
+              : scheduleDay,
       scheduleTime: time,
       scheduleStart:
         (scheduleStartEnabled && scheduleStart) ||
@@ -382,22 +390,22 @@
     </tr>
     <tr>
       <td
-        >{scheduleDay < 8 || scheduleDay === 11
+        >{scheduleDay < 8 || scheduleDay >= 11
           ? 'Schedule start'
           : 'Starting from'}:</td
       >
       <td>
-        {#if scheduleDay < 8 || scheduleDay === 11}
+        {#if scheduleDay < 8 || scheduleDay >= 11}
           <input type="checkbox" bind:checked={scheduleStartEnabled} />
         {/if}
         <input
           type="date"
           disabled={!scheduleStartEnabled &&
-            (scheduleDay < 8 || scheduleDay === 11)}
+            (scheduleDay < 8 || scheduleDay >= 11)}
           bind:value={scheduleStart}
           required={scheduleDay > 7 && scheduleDay < 11}
         />
-        {#if scheduleDay < 8 || scheduleDay === 11}
+        {#if scheduleDay < 8 || scheduleDay >= 11}
           <small>
             (if enabled, only schedule tournaments that will start on this day
             or later)

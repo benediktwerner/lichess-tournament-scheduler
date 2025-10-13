@@ -83,11 +83,16 @@ class Schedule:
                 raise ParseError(f"Invalid value for scheduleDay: {scheduleDay}")
             if scheduleStart is None:
                 raise ParseError("Missing scheduleStart for unregular period")
-        elif scheduleDay >= 10_000:
+        elif 10_000 <= scheduleDay < 20_000:
             if scheduleDay % 10 > 6:
                 raise ParseError(f"Invalid weekday: {scheduleDay % 10}")
             if scheduleDay % 100 // 10 > 4:
                 raise ParseError(f"Invalid weekday ordinal: {scheduleDay}")
+        elif 20_000 <= scheduleDay < 20_010:
+            if scheduleDay % 10 > 6:
+                raise ParseError(f"Invalid weekday: {scheduleDay % 10}")
+        else:
+            raise ParseError(f"Invalid schedule day: {scheduleDay}")
         name = get_or_raise(j, "name", str)
         long_name = re.sub(
             r"{weekOfMonth(?:\|(.*?))*}",
@@ -193,11 +198,16 @@ class Schedule:
                 delta = AddDelta(timedelta(weeks=period))
             else:  # months
                 delta = AddMonths(period)
-        else:
+        elif self.scheduleDay < 20_000:
             weekday = self.scheduleDay % 10
             ordinal = self.scheduleDay % 100 // 10
             delta = XofMonth(weekday, ordinal)
             new = delta.in_month(new)
+        else:
+            day_to_skip = self.scheduleDay % 10
+            if now.isoweekday() == day_to_skip:
+                new += timedelta(days=1)
+            delta = AddDayButSkipX(day_to_skip)
 
         while new < now:
             new = delta.find_next(new)
@@ -468,6 +478,17 @@ class XofMonth:
         else:
             day = (self.weekday - first) % 7 + 1 + self.ordinal * 7
         return date.replace(day=day)
+
+
+class AddDayButSkipX:
+    def __init__(self, day_to_skip: int):
+        self.day_to_skip = day_to_skip
+
+    def find_next(self, date: datetime) -> datetime:
+        new = date + timedelta(days=1)
+        if new.isoweekday() == self.day_to_skip:
+            new += timedelta(days=1)
+        return new
 
 
 @dataclass

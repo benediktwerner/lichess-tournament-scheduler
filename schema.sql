@@ -7,6 +7,7 @@ CREATE TABLE schedules (
     -- 2xxx every xxx weeks
     -- 3xxx every xxx months
     -- 100ab every a-th weekday b of the month (a == 4 means always the last, b == 0 means Monday)
+    -- 2000x every day except x (1-7 for Mon-Sun)
     scheduleTime INT NOT NULL, -- in UTC minutes
     scheduleStart INT, -- unix time in secs when to first schedule this tournament
     scheduleEnd INT, -- unix time in secs when to stop scheduling this tournament

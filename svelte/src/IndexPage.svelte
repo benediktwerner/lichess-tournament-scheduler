@@ -144,11 +144,14 @@
       const period = day % 1000;
       return `Every ${period} ${unit}`;
     }
-    const n = Math.floor(day / 10) % 10;
-    const weekday = day % 10;
-    return `${n === 4 ? 'Last' : formatOrdinal(n + 1)} ${
-      WEEKDAY_NAMES[weekday]
-    } of month`;
+    if (day < 20_000) {
+      const n = Math.floor(day / 10) % 10;
+      const weekday = day % 10;
+      return `${n === 4 ? 'Last' : formatOrdinal(n + 1)} ${
+        WEEKDAY_NAMES[weekday]
+      } of month`;
+    }
+    return SCHEDULE_NAMES[day - 20_001 + 12];
   };
 
   const modal = getContext<SimpleModalContext>('simple-modal');
@@ -157,7 +160,7 @@
     token,
     async () => {
       tokenStates = await fetchTokenState();
-    }
+    },
   );
 
   load(true);
@@ -256,7 +259,7 @@
             </td>
             <td>
               {formatSchedule(schedule.scheduleDay)} at {formatTime(
-                schedule.scheduleTime
+                schedule.scheduleTime,
               )} UTC
             </td>
             <td>{formatDate(schedule.scheduleStart)}</td>
