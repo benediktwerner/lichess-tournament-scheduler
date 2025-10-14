@@ -75,7 +75,8 @@ class Schedule:
             scheduleDay < 0
             or 7 < scheduleDay <= 1000
             or 4000 <= scheduleDay < 10_000
-            or 10_100 <= scheduleDay
+            or 10_100 <= scheduleDay <= 20_000
+            or 20_007 < scheduleDay
         ):
             raise ParseError(f"Invalid value for scheduleDay: {scheduleDay}")
         if 1000 < scheduleDay < 10_000:
@@ -88,11 +89,6 @@ class Schedule:
                 raise ParseError(f"Invalid weekday: {scheduleDay % 10}")
             if scheduleDay % 100 // 10 > 4:
                 raise ParseError(f"Invalid weekday ordinal: {scheduleDay}")
-        elif 20_000 <= scheduleDay < 20_010:
-            if scheduleDay % 10 > 6:
-                raise ParseError(f"Invalid weekday: {scheduleDay % 10}")
-        else:
-            raise ParseError(f"Invalid schedule day: {scheduleDay}")
         name = get_or_raise(j, "name", str)
         long_name = re.sub(
             r"{weekOfMonth(?:\|(.*?))*}",
