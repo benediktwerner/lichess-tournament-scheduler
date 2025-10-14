@@ -107,11 +107,14 @@
   let accessContext: AccessContext | null = loadAccessContext();
   let userName = '';
   let outdated = true;
+  let router: Router;
   init();
 </script>
 
 <Modal>
-  <h1>Lichess Tournament Scheduler</h1>
+  <a href="#" on:click={() => router?.gotoIndex()}>
+    <h1>Lichess Tournament Scheduler</h1>
+  </a>
 
   {#if !outdated}
     {#if accessContext?.token && new Date(accessContext.token.expiry) > new Date(+new Date() + ONE_DAY)}
@@ -119,7 +122,7 @@
         {userName}
         <button type="button" on:click={handleLogout}>Logout</button>
       </div>
-      <Router token={accessContext.token.value} />
+      <Router bind:this={router} token={accessContext.token.value} />
     {:else}
       <button type="button" on:click={handleLogin}>Login with Lichess</button>
     {/if}

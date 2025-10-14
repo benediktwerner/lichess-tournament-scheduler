@@ -21,7 +21,7 @@
   let editSchedule: Schedule | null = null;
   let editArena: ApiArena | null = null;
 
-  const gotoIndex = () => {
+  export const gotoIndex = () => {
     page = Page.Index;
   };
 </script>
