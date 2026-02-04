@@ -99,7 +99,7 @@ class Auth:
         try:
             res = api.verify_token(token)
             if not res:
-            logger.warning("Token invalid or unknown to Lichess")
+                logger.warning("Token invalid or unknown to Lichess")
                 abort(403, description="Token invalid or unknown to Lichess")
 
             if res.expired:
