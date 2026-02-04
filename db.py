@@ -414,7 +414,7 @@ class Db:
     def mark_bad_token(self, team: str, token: str) -> None:
         with self.db as conn:
             conn.execute(
-                "UPDATE msgTokens SET isBad = true WHERE token = ? AND team = ?)",
+                "UPDATE msgTokens SET isBad = true WHERE token = ? AND team = ?",
                 (token, team),
             )
 
