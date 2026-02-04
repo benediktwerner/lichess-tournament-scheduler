@@ -27,14 +27,17 @@ class User:
 
     def assert_for_team(self, team: str) -> None:
         if not self.is_admin and team not in self.teams:
+            logger.warning("Not an admin or team leader of %s", team)
             abort(403)
 
     def assert_admin(self) -> None:
         if not self.is_admin:
+            logger.warning("Not an admin")
             abort(403)
 
     def assert_leader_or_admin(self) -> None:
         if not self.is_admin and not self.teams:
+            logger.warning("Not an admin or team leader")
             abort(403)
 
 
@@ -72,13 +75,16 @@ class Auth:
         self.cache[token] = CacheEntry(user, time())
 
     def __call__(self) -> User:
-        token = request.headers.get("Authorization")
-        if not token:
+        auth_header = request.headers.get("Authorization")
+        if not auth_header:
+            logger.warning("No auth header")
             abort(401)
-        if not token.startswith("Bearer "):
+        if not auth_header.startswith("Bearer "):
+            logger.warning("Auth header doesn't start with 'Bearer': %s", auth_header)
             abort(400, description="Invalid Authorization header")
-        token = token[len("Bearer ") :].strip()
+        token = auth_header[len("Bearer ") :].strip()
         if not re.fullmatch("[a-zA-Z0-9_]+", token):
+            logger.warning("Token has invalid format: %s", token)
             abort(400, description="Invalid Authorization header")
 
         cached = self.get_from_cache(token)
@@ -87,17 +93,21 @@ class Auth:
             return cached
 
         if self.rate_limited_until > time():
+            logger.warning("Rate limited")
             abort(503)
 
         try:
             res = api.verify_token(token)
             if not res:
+            logger.warning("Token invalid or unknown to Lichess")
                 abort(403, description="Token invalid or unknown to Lichess")
 
             if res.expired:
+                logger.warning("Token expired")
                 abort(403, description="Token expired")
 
             if not res.allows_tournaments:
+                logger.warning("Token does not allow tournament creation")
                 abort(403, description="Token does not allow tournament creation")
 
             teams = [
