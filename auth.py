@@ -111,7 +111,9 @@ class Auth:
                 abort(403, description="Token does not allow tournament creation")
 
             teams = [
-                team for team in api.leader_teams(res.userId) if team in self.teams
+                team
+                for team in api.leader_teams(res.userId, token)
+                if team in self.teams
             ]
             admin = res.userId in self.admins
             user = User(admin, teams, token)

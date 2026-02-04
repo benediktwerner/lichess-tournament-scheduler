@@ -29,6 +29,7 @@ BOOL = ["false", "true"]
 
 @dataclass
 class Token:
+    token: str
     userId: str
     expires: Optional[int]
     scopes: List[str]
@@ -47,7 +48,9 @@ class Token:
 
     def is_valid_msg_token_for_team(self, team: str) -> bool:
         return (
-            not self.expired and self.allows_teams and team in leader_teams(self.userId)
+            not self.expired
+            and self.allows_teams
+            and team in leader_teams(self.userId, self.token)
         )
 
 
@@ -60,11 +63,14 @@ def verify_token(t: str) -> Optional[Token]:
     expires = tt.get("expires")
     if expires is not None:
         expires //= 1000
-    return Token(tt["userId"], expires, tt["scopes"].split(","))
+    return Token(t, tt["userId"], expires, tt["scopes"].split(","))
 
 
-def leader_teams(userId: str) -> List[str]:
-    res = requests.get(HOST + ENDPOINT_TEAMS.format(userId))
+def leader_teams(userId: str, token: str) -> List[str]:
+    res = requests.get(
+        HOST + ENDPOINT_TEAMS.format(userId),
+        headers={"Authorization": f"Bearer {token}"},
+    )
     res.raise_for_status()
     teams = res.json()
     return [
